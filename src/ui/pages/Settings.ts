@@ -110,7 +110,7 @@ export const settingsInfo: Record<string, any> = {
           if (
             (await Modal.prompt(
               "WARNING",
-              "This will overwrite ALL of your currently saved Miis and delete them forever! Please back up your save data before using this option.\n\nAre you certain that you understand the risk?",
+              "This will overwrite ALL of your currently saved Miis and delete them forever!\nPlease back up your save data before using this option.\n\nAre you certain that you understand the risk?",
               "body"
             )) === false
           )

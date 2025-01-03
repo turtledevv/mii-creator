@@ -161,7 +161,7 @@ export default {
     dangerous = false
   ) {
     return new Promise((res, _rej) => {
-      this.modal(
+      var m = this.modal(
         title,
         content,
         parent,
@@ -175,6 +175,7 @@ export default {
           callback: (_: any) => res(false),
         }
       );
+      m.qs(".modal-body")!.classOn("flex-group");
     });
   },
   input: function (

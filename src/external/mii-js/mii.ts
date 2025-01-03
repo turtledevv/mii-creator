@@ -395,7 +395,7 @@ export default class Mii {
           0x69,
           // MiiC v2 (switch colors, hat type and hat color)
           0x6a,
-          // MiiC v3 (switch colors, hats, and favorite/skin color)
+          // MiiC v3 (switch colors, hats, and shirt / face paint color)
           0x6c,
         ]
       ),
