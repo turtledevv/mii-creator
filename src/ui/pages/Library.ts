@@ -197,7 +197,7 @@ export async function Library(highlightMiiId?: string) {
       miiContainer.appendMany(miiImage, miiName).appendTo(libraryList);
 
       miiContainer.on("click", async () => {
-        const modal = Modal.modal(
+        Modal.modal(
           "Oops",
           "This Mii might be corrupted. Choose an option below.",
           "body",
