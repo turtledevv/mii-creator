@@ -79,7 +79,7 @@ export const getMiiRender = async (
       .style({
         width: "720px",
         height: "720px",
-        opacity: "1",
+        opacity: "0",
         // position: "fixed",
       })
       .appendTo("body");
