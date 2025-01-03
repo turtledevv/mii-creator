@@ -84,6 +84,7 @@ export async function traverseMesh(node: THREE.Mesh, mpCharInfo: Mii) {
   } else {
     modulateColor = new THREE.Vector4(...userData.modulateColor, 1);
   }
+  THREE.ColorManagement.enabled = false;
 
   if (shaderSetting === "none") {
     THREE.ColorManagement.enabled = true;
@@ -126,7 +127,6 @@ export async function traverseMesh(node: THREE.Mesh, mpCharInfo: Mii) {
 
   // let tex: THREE.Texture | null = null;
 
-  THREE.ColorManagement.enabled = false;
   if (originalMaterial.map) {
     defines.USE_MAP = "";
 

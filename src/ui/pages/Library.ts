@@ -1,5 +1,5 @@
 import Html from "@datkat21/html";
-import localforage, { config } from "localforage";
+import localforage from "localforage";
 import { MiiEditor, MiiGender, RenderPart } from "../../class/MiiEditor";
 import Modal from "../components/Modal";
 import Mii from "../../external/mii-js/mii";
@@ -88,14 +88,14 @@ export async function Library(highlightMiiId?: string) {
         .text("You have no Miis yet. Create one to get started!")
     );
   }
+  let miiErrorCount = 0;
   for (const mii of miis) {
     let miiContainer = new Html("div").class("library-list-mii");
 
     AddButtonSounds(miiContainer);
 
-    const miiData = new Mii(Buffer.from(mii.mii, "base64"));
-
     try {
+      const miiData = new Mii(Buffer.from(mii.mii, "base64"));
       // prevent error when importing converted Wii-era data
       miiData.unknown1 = 0;
       miiData.unknown2 = 0;
@@ -187,8 +187,90 @@ export async function Library(highlightMiiId?: string) {
       });
     } catch (e: unknown) {
       console.log("Oops", e);
+      miiErrorCount++;
+
+      let miiImage = new Html("img").attr({
+        src: "data:image/svg+xml," + encodeURIComponent(EditorIcons.error),
+      });
+      let miiName = new Html("span").text("?");
+
+      miiContainer.appendMany(miiImage, miiName).appendTo(libraryList);
+
+      miiContainer.on("click", async () => {
+        const modal = Modal.modal(
+          "Oops",
+          "This Mii might be corrupted. Choose an option below.",
+          "body",
+          {
+            text: "Cancel",
+            callback(e) {},
+          },
+          {
+            text: "Download a copy",
+            callback(e) {
+              console.log(mii);
+              saveArrayBuffer(
+                Buffer.from(mii.mii, "base64").buffer,
+                mii.id + ".miic"
+              );
+            },
+          },
+          {
+            text: "Download a copy (Base64 encoded)",
+            callback(e) {
+              console.log(mii);
+              saveArrayBuffer(
+                Buffer.from(mii.mii).buffer,
+                mii.id + ".miic.txt"
+              );
+            },
+          },
+          {
+            text: "Delete",
+            callback(e) {
+              Modal.modal(
+                "Warning",
+                "Are you sure you want to delete this Mii?",
+                "body",
+                {
+                  async callback(e) {
+                    await localforage.removeItem(mii.id);
+                    await shutdown();
+                    Library();
+                  },
+                  text: "Yes",
+                  type: "danger",
+                },
+                {
+                  callback(e) {
+                    /* ... */
+                  },
+                  text: "No",
+                }
+              );
+            },
+          }
+        );
+      });
     }
   }
+
+  if (miiErrorCount > 0) {
+    Modal.modal(
+      "Error",
+      `It appears that ${miiErrorCount} of your Miis have failed to load. Their data may be corrupted.\n\nIf you'd like to try and recover the Mii data, you can select the Miis with errors and choose to either save a copy or delete them.`,
+      "body",
+      {
+        callback(e) {},
+        text: "Cancel",
+      },
+      {
+        callback(e) {},
+        text: "OK",
+      }
+    );
+  }
+
   window.LazyLoad.update();
 
   sidebar.appendMany(
@@ -472,8 +554,8 @@ const miiEdit = (mii: MiiLocalforage, shutdown: () => any, miiData: Mii) => {
       },
       {
         text: "Delete",
-        async callback() {
-          let tmpDeleteModal = await Modal.modal(
+        callback() {
+          let tmpDeleteModal = Modal.modal(
             "Warning",
             "Are you sure you want to delete this Mii?",
             "body",
@@ -494,13 +576,31 @@ const miiEdit = (mii: MiiLocalforage, shutdown: () => any, miiData: Mii) => {
             }
           );
 
-          modal
-            .qs(".modal-body")
-            ?.prepend(
-              new Html("img")
-                .attr({ src: miiIconUrl(miiData) })
-                .style({ width: "180px", margin: "-18px auto 0 auto" })
-            );
+          const scaredMiiImage = new Html("img")
+            // surprised with open mouth expression
+            .attr({ src: miiIconUrl(miiData) + "&expression=10" })
+            .style({ width: "180px", margin: "-18px auto 0 auto" });
+
+          tmpDeleteModal.qs(".modal-body")?.prepend(scaredMiiImage);
+          tmpDeleteModal.qsa("button")!.forEach((item) => {
+            const yes = item?.elm.classList.contains("danger");
+            item!.on("pointerenter", () => {
+              if (yes) {
+                scaredMiiImage.attr({
+                  src: miiIconUrl(miiData) + "&expression=30",
+                });
+              } else {
+                scaredMiiImage.attr({
+                  src: miiIconUrl(miiData) + "&expression=1",
+                });
+              }
+            });
+            item!.on("pointerleave", () => {
+              scaredMiiImage.attr({
+                src: miiIconUrl(miiData) + "&expression=10",
+              });
+            });
+          });
         },
       },
       {
@@ -568,13 +668,16 @@ const miiExport = (mii: MiiLocalforage, miiData: Mii) => {
         // hack: force FFL shader for QR codes by changing the setting
         const setting = await getSetting("shaderType");
         await localforage.setItem("settings_shaderType", "wiiu");
-        const qrCodeImage = await QRCodeCanvas(mii.mii, miiData.hasExtendedColors()); // extendedColors
+        const qrCodeImage = await QRCodeCanvas(
+          mii.mii,
+          miiData.hasExtendedColors()
+        ); // extendedColors
         await localforage.setItem("settings_shaderType", setting);
         downloadLink(qrCodeImage, `${miiData.miiName}_QR.png`);
       },
     },
     {
-      text: "Render an image",
+      text: "Render presets",
       async callback() {
         miiExportRender(mii, miiData);
       },

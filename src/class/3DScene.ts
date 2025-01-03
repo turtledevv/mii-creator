@@ -92,7 +92,7 @@ export class Mii3DScene {
 
     getSetting("shaderType").then((type) => {
       // glTF Loader hack only for FFL shader to force srgb-linear textures.
-      if (type === "lightDisabled" || type === "none") {
+      if (type === "lightDisabled" || type === "wiiu") {
         this.#gltfLoader = new GLTFLoader() as TrueGLTFLoader;
       } else {
         this.#gltfLoader = new TrueGLTFLoader();

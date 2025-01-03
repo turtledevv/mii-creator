@@ -6,42 +6,30 @@ import {
 import { encryptAndEncodeVer3StoreDataToQRCodeFormat } from "./EncodeQRCode.js";
 import Mii from "../external/mii-js/mii.js";
 import { Buffer as Buf } from "../../node_modules/buffer/index";
-import { Config } from "../config.js";
 import { CameraPosition, Mii3DScene, SetupType } from "../class/3DScene.js";
 import Html from "@datkat21/html";
-import { Box3, Vector3 } from "three";
+import { Vector3 } from "three";
 
 const ver3Format = supportedFormats.find(
   (f) => f.className === "Gen2Wiiu3dsMiitomo"
 )!;
 
-const makeQrCodeImage = async (
-  mii: string,
-  extendedColors: boolean
-): Promise<HTMLImageElement> => {
-  let convertedVer3Data: Uint8Array, ver3QRData: any[];
+const makeQrCodeImage = async (mii: string): Promise<HTMLImageElement> => {
+  let convertedVer3Data: Uint8Array, ver3QRData: Uint8Array | any[];
 
   const miiU8 = new Uint8Array(Buf.from(mii, "base64"));
+
   convertedVer3Data = new Uint8Array(
-    convertDataToType(
-      miiU8,
-      ver3Format,
-      ver3Format.className,
-      true
-    )
+    convertDataToType(miiU8, ver3Format, ver3Format.className, true)
   );
+
   ver3QRData = encryptAndEncodeVer3StoreDataToQRCodeFormat(convertedVer3Data);
   // Append any data after the first 96 bytes (fixed by the function above)
   ver3QRData = new Uint8Array([...ver3QRData, ...miiU8.subarray(96)]); // May or may not append nothing.
   // ... after the encrypted portion (appending after that should still be safe to scan)
 
-  // console.log(convertedVer3Data, ver3QRData);
   const png = qrjs.generatePNG(ver3QRData, { margin: 0 });
-  // //@ts-expect-error
-  // window.qrCodeSourceData = convertedVer3Data;
-  // //@ts-expect-error
-  // window.qrCodeData = ver3QRData;
-  // console.log(ver3QRData, png);
+
   const img = new Image(431, 431);
   img.src = URL.createObjectURL(await (await fetch(png)).blob());
   return new Promise((resolve) => {
@@ -91,13 +79,14 @@ export const getMiiRender = async (
       .style({
         width: "720px",
         height: "720px",
-        opacity: "0",
+        opacity: "1",
         // position: "fixed",
       })
       .appendTo("body");
     const scene = new Mii3DScene(tmpMii, parent.elm, SetupType.Screenshot);
     scene.init().then(async () => {
       await scene.updateBody();
+      await scene.updateMiiHead();
       // swap pose for render
       scene.anim.forEach((a) => {
         a.timeScale = 0;
@@ -206,7 +195,7 @@ export const QRCodeCanvas = async (
     MiiCustomRenderType.Body,
     extendedColors
   );
-  const qrCodeSource = await makeQrCodeImage(mii, extendedColors);
+  const qrCodeSource = await makeQrCodeImage(mii);
   const background = await getBackground(extendedColors);
 
   const canvas = document.createElement("canvas");
