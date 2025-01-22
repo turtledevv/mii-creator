@@ -80,6 +80,7 @@ export function GlassesTab(data: TabRenderInit) {
               min: 0,
               max: 20,
               part: RenderPart.Head,
+              inverse: true
             },
             {
               type: FeatureSetType.Range,

@@ -32,6 +32,7 @@ export function MoleTab(data: TabRenderInit) {
               min: 0,
               max: 30,
               part: RenderPart.Face,
+              inverse: true
             },
             {
               type: FeatureSetType.Range,

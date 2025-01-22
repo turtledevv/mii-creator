@@ -35,6 +35,7 @@ export function NoseTab(data: TabRenderInit) {
               min: 0,
               max: 18,
               part: RenderPart.Head,
+              inverse: true
             },
             {
               type: FeatureSetType.Range,

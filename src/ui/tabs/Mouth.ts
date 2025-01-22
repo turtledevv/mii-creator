@@ -82,6 +82,7 @@ export function MouthTab(data: TabRenderInit) {
               min: 0,
               max: 18,
               part: RenderPart.Face,
+              inverse: true
             },
             {
               type: FeatureSetType.Range,

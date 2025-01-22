@@ -41,7 +41,9 @@ export interface FeatureSetRangeItem {
   min: number;
   max: number;
   property: string;
+  label?: string;
   forceRender?: boolean;
+  inverse?: boolean;
 }
 export interface FeatureSetSliderItem {
   type: FeatureSetType.Slider;
@@ -256,24 +258,39 @@ export function MiiPagedFeatureSet(set: FeatureSet) {
                 });
                 break;
               case FeatureSetType.Range:
+                let featureRangeGroup = new Html("div")
+                  .class("col")
+                  .style({ width: "100%", gap: "0", "align-items": "center" })
+                  .appendTo(setList);
+
+                if (item.label !== undefined) {
+                  new Html("span").text(item.label).appendTo(featureRangeGroup);
+                }
+
                 let featureRangeItem = new Html("div")
                   .class("feature-slider")
-
-                  .appendTo(setList);
+                  .appendTo(featureRangeGroup);
 
                 if (item.iconStart) {
                   let frontIcon = new Html("span")
                     .html(item.iconStart)
                     .on("click", () => {
-                      featureRange.val(Number(featureRange.getValue()) - 1);
-                      (tmpMii as Record<string, any>)[item.property] = Number(
-                        featureRange.getValue()
+                      featureRange.val(
+                        Number(featureRange.getValue()) +
+                          (item.inverse ? 1 : -1)
                       );
+                      (tmpMii as Record<string, any>)[item.property] =
+                        item.inverse
+                          ? item.max +
+                            item.min -
+                            Number(featureRange.getValue())
+                          : Number(featureRange.getValue());
                       if (item.soundStart) playSound(item.soundStart);
                       else playSound("select");
                       update();
                     });
-                  featureRangeItem.append(frontIcon);
+                  if (item.inverse) featureRangeItem.prepend(frontIcon);
+                  else featureRangeItem.append(frontIcon);
                 }
 
                 let featureRange = new Html("input")
@@ -282,32 +299,59 @@ export function MiiPagedFeatureSet(set: FeatureSet) {
                     min: item.min,
                     max: item.max,
                   })
-                  .id(id)
-                  .appendTo(featureRangeItem);
+                  .id(id);
+
+                if (item.inverse) featureRangeItem.prepend(featureRange);
+                else featureRangeItem.append(featureRange);
 
                 if (item.iconEnd) {
                   let backIcon = new Html("span")
                     .html(item.iconEnd)
                     .on("click", () => {
-                      featureRange.val(Number(featureRange.getValue()) + 1);
-                      (tmpMii as Record<string, any>)[item.property] = Number(
-                        featureRange.getValue()
+                      featureRange.val(
+                        Number(featureRange.getValue()) +
+                          (item.inverse ? -1 : 1)
                       );
+                      (tmpMii as Record<string, any>)[item.property] =
+                        item.inverse
+                          ? item.max +
+                            item.min -
+                            Number(featureRange.getValue())
+                          : Number(featureRange.getValue());
                       if (item.soundEnd) playSound(item.soundEnd);
                       else playSound("select");
                       update();
                     });
-                  featureRangeItem.append(backIcon);
+                  if (item.inverse) featureRangeItem.prepend(backIcon);
+                  else featureRangeItem.append(backIcon);
                 }
 
                 featureRange.val(
-                  (tmpMii as Record<string, any>)[item.property]
+                  item.inverse
+                    ? item.max - (tmpMii as Record<string, any>)[item.property]
+                    : (tmpMii as Record<string, any>)[item.property]
                 );
 
                 featureRange.on("change", () => {
-                  (tmpMii as Record<string, any>)[item.property] = Number(
-                    featureRange.getValue()
-                  );
+                  const newValue = item.inverse
+                    ? item.max + item.min - Number(featureRange.getValue())
+                    : Number(featureRange.getValue());
+                  const current = (tmpMii as Record<string, any>)[
+                    item.property
+                  ];
+
+                  if (
+                    item.soundStart !== undefined &&
+                    item.soundEnd !== undefined
+                  ) {
+                    if (newValue < current) {
+                      playSound(item.soundStart);
+                    } else {
+                      playSound(item.soundEnd);
+                    }
+                  }
+
+                  (tmpMii as Record<string, any>)[item.property] = newValue;
                   update();
                 });
 
