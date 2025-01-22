@@ -1,6 +1,7 @@
 import Html from "@datkat21/html";
 import type { MiiEditor } from "../../class/MiiEditor";
 
+// helper input text box to work with the editor ui
 export function Input(
   label: string,
   value: string,

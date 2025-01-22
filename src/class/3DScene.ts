@@ -917,14 +917,17 @@ export class Mii3DScene {
     this.headReady = true;
     await this.updateBody();
   }
-  sparkle() {
-    // remove all previous sparkles lol
-    this.animations
-      .keys()
-      .filter((p) => p.startsWith("particle_"))
-      .forEach((key) => this.animations.delete(key));
 
-    // Load the sparkle texture
+  particles!: SparkleParticle[];
+  // particleTimeout!: Timer;
+  sparkle() {
+    if (!this.particles) this.particles = [];
+    // remove all previous sparkles lol
+    // this.animators
+    //   .keys()
+    //   .filter((p) => p.startsWith("particle_"))
+    //   .forEach((key) => this.animators.delete(key));
+
     const loader = new THREE.TextureLoader();
     loader.load("./assets/images/star.png", (texture) => {
       const pos = new THREE.Vector3();
@@ -936,14 +939,21 @@ export class Mii3DScene {
         new THREE.Vector3(0, pos.y + box.min.y / 2, 2),
         texture
       );
+      this.particles.push(particle);
       this.animators.set("particle_" + performance.now(), (_t, delta) =>
         particle.update(delta)
       );
       setTimeout(() => {
-        this.animations
+        this.particles.forEach((p, i) => {
+          p.dispose();
+        });
+        this.particles = [];
+        this.animators
           .keys()
           .filter((p) => p.startsWith("particle_"))
-          .forEach((key) => this.animations.delete(key));
+          .forEach((key) => {
+            this.animators.delete(key);
+          });
       }, 1000);
     });
   }

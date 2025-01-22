@@ -239,6 +239,7 @@ export async function setupUi() {
 
   document.addEventListener("keydown", (e) => {
     if (document.activeElement === document.body) {
+      if (e.ctrlKey || e.altKey || e.metaKey) return;
       if (e.code === "KeyS") {
         Modal.modal(
           "sound test",
