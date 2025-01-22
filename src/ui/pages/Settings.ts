@@ -331,6 +331,19 @@ export const settingsInfo: Record<string, any> = {
       },
     ],
   },
+  updateNotices: {
+    type: "non-settings-multi",
+    label: "Update Notices",
+    description: "View the last update notice if you missed it.",
+    choices: [
+      {
+        label: "Review update notice",
+        select() {
+          replayUpdateNotice();
+        },
+      },
+    ],
+  },
 };
 
 const prefix = "settings_";
@@ -531,5 +544,80 @@ export async function Settings() {
         );
         break;
     }
+  }
+}
+
+export async function replayUpdateNotice() {
+  await setSetting(`has-seen-${Config.version.string}`, false);
+  displayUpdateNotice();
+  // Modal.modal(
+  //   "Notice",
+  //   "This display the update notice again. Do you want to continue?",
+  //   "body",
+  //   { text: "Cancel" },
+  //   {
+  //     text: "Yes",
+  //     async callback(e) {
+  //       await setSetting(`has-seen-${Config.version.string}`, false);
+  //       displayUpdateNotice();
+  //     },
+  //   },
+  //   { text: "No" }
+  // );
+}
+
+export async function displayUpdateNotice() {
+  const hasSeenLatestUpdate = await getSetting(
+    `has-seen-${Config.version.string}`
+  );
+  console.log(hasSeenLatestUpdate);
+  if (hasSeenLatestUpdate === false || hasSeenLatestUpdate === null) {
+    let m = Modal.modal(
+      `New Update: ${Config.version.string}`,
+      "Yes new update",
+      "body",
+      {
+        text: "OK",
+      }
+    );
+    const button = m.qs("button")!.elm as HTMLButtonElement;
+    button.disabled = true;
+
+    // trying not to be too pushy  but i need to make users fully aware of the new update
+    let timer = 10;
+
+    function update() {
+      if (timer !== 0) m.qs("button")!.text(`OK (${timer})`);
+      else {
+        clearInterval(i);
+        button.disabled = false;
+        button.innerText = "OK";
+
+        button.addEventListener("click", () => {
+          setSetting(`has-seen-${Config.version.string}`, true);
+        });
+      }
+    }
+
+    m.qs(".modal-body span")!.cleanup();
+    // free vulnerability for you
+    m.qs(".modal-body")!.prepend(
+      new Html("div")
+        .style({ "max-width": "720px" })
+        .html(Config.version.changelog)
+    );
+    // Modify <a> tags in the changelog
+    m.qsa("a")!.forEach((b) => {
+      if (b === null) return;
+      AddButtonSounds(b);
+      b.attr({ target: "_blank" });
+    });
+
+    update();
+    var i = setInterval(() => {
+      timer--;
+      update();
+    }, 1000);
+    // await setSetting(`has-seen-${Config.version.string}`, true);
   }
 }

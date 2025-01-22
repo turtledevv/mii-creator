@@ -9,6 +9,8 @@ import { Buffer as Buf } from "../../node_modules/buffer/index";
 import { CameraPosition, Mii3DScene, SetupType } from "../class/3DScene.js";
 import Html from "@datkat21/html";
 import { Vector3 } from "three";
+import { AddButtonSounds } from "./AddButtonSounds.js";
+import { Config } from "../config.js";
 
 const ver3Format = supportedFormats.find(
   (f) => f.className === "Gen2Wiiu3dsMiitomo"
@@ -234,3 +236,96 @@ export const QRCodeCanvas = async (
   const canvasPngImage = canvas.toDataURL("png", 100);
   return canvasPngImage;
 };
+
+// This recreates the html from the update changelog
+export function createMiiCard(
+  parent: Html | HTMLElement,
+  name: string,
+  username: string,
+  link: string,
+  message: string,
+  studioData: string,
+  extra: string = ""
+) {
+  new Html("div")
+    .class("flex-group")
+    .style({
+      gap: "0",
+      "justify-content": "flex-start",
+      "text-align": "left",
+    })
+    .appendMany(
+      new Html("img")
+        .attr({
+          width: 96,
+          draggable: "false",
+          src:
+            Config.renderer.renderHeadshotURLNoParams +
+            `?data=${encodeURIComponent(
+              studioData
+            )}&type=variableiconbody&verifyCharInfo=0&shaderType=1&width=96&source=credits&characterYRotate=8&bodyType=2&` +
+            extra,
+        })
+        .style({ width: "96px", height: "96px" }),
+      new Html("div")
+        .class("col")
+        .style({ gap: "12px", flex: "1" })
+        .appendMany(
+          new Html("small")
+            .appendMany(
+              new Html("span").text(name).style({
+                display: "inline",
+                width: "max-content",
+              }),
+              AddButtonSounds(
+                new Html("a")
+                  .text(`(@${username})`)
+                  .attr({ target: "_blank", href: link })
+              )
+            )
+            .style({ display: "flex", gap: "8px" }),
+          new Html("div").html(message)
+        )
+    )
+    .appendTo(parent);
+}
+export function createIconCard(
+  parent: Html | HTMLElement,
+  name: string,
+  link: string,
+  message: string,
+  icon: string
+) {
+  let msg: Html;
+  if (link !== "") {
+    msg = new Html("a").attr({ href: link, target: "_blank" }).html(message);
+  } else {
+    msg = new Html("div").html(message);
+  }
+
+  new Html("div")
+    .class("flex-group")
+    .style({
+      gap: "0",
+      "justify-content": "flex-start",
+      "text-align": "left",
+    })
+    .appendMany(
+      new Html("div").html(icon).style({ width: "96px", height: "96px" }),
+      new Html("div")
+        .class("col")
+        .style({ gap: "12px", flex: "1" })
+        .appendMany(
+          new Html("small")
+            .appendMany(
+              new Html("span").text(name).style({
+                display: "inline",
+                width: "max-content",
+              })
+            )
+            .style({ display: "flex", gap: "8px" }),
+          msg
+        )
+    )
+    .appendTo(parent);
+}
