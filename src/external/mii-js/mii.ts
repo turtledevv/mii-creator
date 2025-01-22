@@ -1227,7 +1227,7 @@ export default class Mii {
     return miiStudioData;
   }
 
-  // Charinfo encoding function courtesy of Timimimi
+  // CharInfo (Switch) encoding function courtesy of Timimimi
   public encodeCharinfo(): Buffer {
     this.validate(); // * Don't write invalid Mii data
 
