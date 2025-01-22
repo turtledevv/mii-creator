@@ -20,7 +20,7 @@ import {
   MiiPagedFeatureSet,
 } from "../components/MiiPagedFeatureSet";
 import { downloadLink, saveArrayBuffer } from "../../util/downloadLink";
-import { ArrayNum } from "../../util/Numbers";
+import { ArrayNum, RandomInt } from "../../util/Numbers";
 import {
   Material,
   MeshStandardMaterial,
@@ -52,8 +52,11 @@ export const miiIconUrl = (mii: Mii, library: boolean = true) =>
     mii.encode().toString("base64")
   )}&source=${library ? "library" : "lookalike"}`;
 
+let shutdown: () => any = () => {
+  console.log("Shutdown was called but was not set yet!");
+};
 export async function Library(highlightMiiId?: string) {
-  function shutdown(): Promise<void> {
+  function shutdownReal(): Promise<void> {
     return new Promise((resolve) => {
       container.class("fadeOut");
       setTimeout(() => {
@@ -62,6 +65,7 @@ export async function Library(highlightMiiId?: string) {
       }, 500);
     });
   }
+  shutdown = shutdownReal;
 
   const container = new Html("div").class("mii-library").appendTo("body");
 
@@ -141,7 +145,7 @@ export async function Library(highlightMiiId?: string) {
 
       let miiName = new Html("span").text(miiData.miiName);
 
-      let miiEditCallback = miiEdit(mii, shutdown, miiData);
+      let miiEditCallback = miiEdit(mii, miiData);
 
       miiContainer.on("click", async () => {
         if (hasMiiErrored === true) {
@@ -276,7 +280,7 @@ export async function Library(highlightMiiId?: string) {
     new Html("div").class("sidebar-buttons").appendMany(
       AddButtonSounds(
         new Html("button").text("Create New").on("click", async () => {
-          miiCreateDialog(shutdown);
+          miiCreateDialog();
         })
       ),
       AddButtonSounds(
@@ -317,33 +321,33 @@ type MiiLocalforage = {
   mii: string;
 };
 
-const miiCreateDialog = (shutdown: Function) => {
-  Modal.modal(
+const miiCreateDialog = () => {
+  const m = Modal.modal(
     "Create New",
     "How would you like to create the Mii?",
     "body",
     {
       text: "From Scratch",
       callback: () => {
-        miiCreateFromScratch(shutdown);
+        miiCreateFromScratch();
       },
     },
     {
       text: "Enter PNID",
       callback: () => {
-        miiCreatePNID(shutdown);
+        miiCreatePNID();
       },
     },
     {
       text: "Choose a look-alike",
       callback: () => {
-        miiCreateRandomFFL(shutdown);
+        miiCreateRandomFFL();
       },
     },
     {
       text: "Random NNID",
       callback: () => {
-        miiCreateRandom(shutdown);
+        miiCreateRandom();
       },
     },
     {
@@ -357,7 +361,7 @@ const miiCreateDialog = (shutdown: Function) => {
           {
             text: "Cancel",
             callback: () => {
-              miiCreateDialog(shutdown);
+              miiCreateDialog();
             },
           },
           {
@@ -411,7 +415,7 @@ const miiCreateDialog = (shutdown: Function) => {
     }
   );
 };
-const miiCreateFromScratch = (shutdown: Function) => {
+const miiCreateFromScratch = () => {
   function cb(gender: MiiGender) {
     return () => {
       shutdown();
@@ -436,11 +440,11 @@ const miiCreateFromScratch = (shutdown: Function) => {
     },
     {
       text: "Cancel",
-      callback: () => miiCreateDialog(shutdown),
+      callback: () => miiCreateDialog(),
     }
   );
 };
-const miiCreatePNID = async (shutdown: Function) => {
+const miiCreatePNID = async () => {
   const input = await Modal.input(
     "Create New",
     "Enter PNID of user..",
@@ -449,7 +453,7 @@ const miiCreatePNID = async (shutdown: Function) => {
     false
   );
   if (input === false) {
-    return miiCreateDialog(shutdown);
+    return miiCreateDialog();
   }
 
   Loader.show();
@@ -461,7 +465,7 @@ const miiCreatePNID = async (shutdown: Function) => {
   Loader.hide();
   if (!pnid.ok) {
     await Modal.alert("Error", `Couldn't get Mii: ${await pnid.text()}`);
-    return Library();
+    return;
   }
 
   shutdown();
@@ -474,7 +478,7 @@ const miiCreatePNID = async (shutdown: Function) => {
     (await pnid.json()).data
   );
 };
-const miiCreateRandom = async (shutdown: Function) => {
+const miiCreateRandom = async () => {
   Loader.show();
   let random = await fetch(Config.dataFetch.nnidRandomURL).then((j) =>
     j.json()
@@ -529,7 +533,7 @@ const miiCreateRandomFFL = async (shutdown: Function) => {
     });
   }
 };
-const miiEdit = (mii: MiiLocalforage, shutdown: () => any, miiData: Mii) => {
+const miiEdit = (mii: MiiLocalforage, miiData: Mii) => {
   return () => {
     const modal = Modal.modal(
       "Mii Options",
@@ -578,27 +582,57 @@ const miiEdit = (mii: MiiLocalforage, shutdown: () => any, miiData: Mii) => {
             URL.revokeObjectURL(fearfulIconURL);
             URL.revokeObjectURL(reliefIconURL);
           }
+          function destroy() {
+            // cry about it
+            disableModal();
+            scaredMiiImage.classOn("rotateAndCry");
+          }
+
+          function closingCallback() {
+            tmpDeleteModal
+              .qs(".modal-body")!
+              .qsa("*")!
+              .forEach((a) => a!.attr({ disabled: true, tabindex: "-1" }));
+          }
+          function disableModal() {
+            closingCallback();
+          }
+          function closeModal() {
+            tmpDeleteModal.class("closing");
+            closingCallback();
+            setTimeout(() => {
+              tmpDeleteModal.cleanup();
+            }, 350);
+          }
 
           let tmpDeleteModal = Modal.modal(
             "Warning",
             `Are you sure you want to delete ${miiData.miiName}?`,
-            "body",
-            {
-              async callback(e) {
-                release();
-                await localforage.removeItem(mii.id);
-                await shutdown();
-                Library();
-              },
-              text: "Yes",
-              type: "danger",
-            },
-            {
-              callback(e) {
-                release();
-              },
-              text: "No",
-            }
+            "body"
+          );
+
+          // button group
+          tmpDeleteModal.qs(".modal-body .flex-group")!.appendMany(
+            new Html("button")
+              .class("danger")
+              .text("Yes")
+              .on("click", () => {
+                destroy();
+                scaredMiiImage.attr({
+                  src: fearfulIconURL,
+                });
+                setTimeout(async () => {
+                  closeModal();
+                  release();
+                  await localforage.removeItem(mii.id);
+                  await shutdown();
+                  Library();
+                }, 1000);
+              }),
+            new Html("button").text("No").on("click", () => {
+              closeModal();
+              release();
+            })
           );
 
           // center
@@ -647,13 +681,26 @@ const miiEdit = (mii: MiiLocalforage, shutdown: () => any, miiData: Mii) => {
         text: "Cancel",
       }
     );
-    modal
-      .qs(".modal-body")
-      ?.prepend(
-        new Html("img")
-          .attr({ src: miiIconUrl(miiData) })
-          .style({ width: "180px", margin: "-18px auto 0 auto" })
-      );
+    // new UI layout (a bit hacky)
+    // modal.qs(".modal-body span")!.cleanup();
+    // modal.qs(".modal-body")!.style({ "flex-direction": "row" });
+    // modal
+    //   .qs(".modal-body .flex-group")!
+    //   .classOff("flex-group")
+    //   .classOn("col")
+    //   .style({ "justify-content": "center" });
+    modal.qs(".modal-body")?.prepend(
+      new Html("img")
+        .attr({
+          src: miiIconUrl(miiData, true, "all_body_sugar", 240),
+        })
+        .style({
+          "object-fit": "contain",
+          width: "180px",
+          height: "240px",
+          margin: "-18px auto 0 auto",
+        })
+    );
   };
 };
 
