@@ -171,9 +171,9 @@ export const getBackground = async (
 ): Promise<HTMLImageElement> => {
   let url: string = "";
   if (isMiic) {
-    url = "./assets/img/bg_qr_miic.png";
+    url = "./assets/images/bg_qr_miic.png";
   } else {
-    url = "./assets/img/bg_qr_wiiu.png";
+    url = "./assets/images/bg_qr_wiiu.png";
   }
   const blob = await (await fetch(url)).blob();
   const img = new Image(1280, 720);

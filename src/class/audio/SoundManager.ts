@@ -25,12 +25,12 @@ export class SoundManager {
       const theme = document.documentElement.dataset.theme;
       if (theme !== currentTheme) {
         if (theme === "wiiu") {
-          loadBaseSounds("./assets/aud/miiMakerU.zip");
+          loadBaseSounds("./assets/audio/miiMakerU.zip");
           this.previousVolume = 0.75;
           this.setVolume(0.75);
           this.previousVolume = 0.75;
         } else {
-          loadBaseSounds("./assets/aud/miiMakerSwitch.zip");
+          loadBaseSounds("./assets/audio/miiMakerSwitch.zip");
           this.previousVolume = 0.28;
           this.setVolume(0.28);
           this.previousVolume = 0.28;
@@ -92,7 +92,7 @@ export const setupSoundManager = () => {
 };
 
 export const loadBaseSounds = async (
-  path: string = "./assets/aud/miiMakerSwitch.zip"
+  path: string = "./assets/audio/miiMakerSwitch.zip"
 ) => {
   const data = await fetch(path).then((j) => j.blob());
   const zip = await JSZip.loadAsync(data);

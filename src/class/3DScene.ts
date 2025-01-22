@@ -444,8 +444,8 @@ export class Mii3DScene {
     const bodyModel = (await getSetting("bodyModel")) as string;
 
     const loaders = [
-      setupMiiBody(`./assets/mdl/miiBodyM_${bodyModel}.glb`, "m"),
-      setupMiiBody(`./assets/mdl/miiBodyF_${bodyModel}.glb`, "f"),
+      setupMiiBody(`./assets/models/miiBodyM_${bodyModel}.glb`, "m"),
+      setupMiiBody(`./assets/models/miiBodyF_${bodyModel}.glb`, "f"),
     ];
 
     await Promise.all(loaders);
@@ -802,7 +802,7 @@ export class Mii3DScene {
           try {
             if (this.mii.extHatType !== 0) {
               let hatModel = await this.#gltfLoader.loadAsync(
-                `./assets/mdl/hat_${this.mii.extHatType}.glb`
+                `./assets/models/hat_${this.mii.extHatType}.glb`
               );
 
               hatModel.scene.name = "HatScene";
@@ -926,8 +926,7 @@ export class Mii3DScene {
 
     // Load the sparkle texture
     const loader = new THREE.TextureLoader();
-    loader.load("./assets/img/star.png", (texture) => {
-      // Create a sparkle effect at the center of the scene
+    loader.load("./assets/images/star.png", (texture) => {
       const pos = new THREE.Vector3();
       const box = new THREE.Box3();
       this.#scene.getObjectByName("MiiHead")!.getWorldPosition(pos);
