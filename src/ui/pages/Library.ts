@@ -679,7 +679,7 @@ const miiFFSDWarning = async (miiData: Mii) => {
   if (miiData.hasExtendedColors() === true) {
     let result = await Modal.prompt(
       "Warning",
-      "This Mii is using extended Switch colors and/or MiiCreator features, but those colors will be lost when converting to FFSD. Is this OK?",
+      'This Mii is using extended Switch colors and/or MiiCreator features, but those features will be lost when converting to FFSD.\nUse "Save MiiCreator data" or "Save Charinfo data" if you want to keep the data.\nIs this OK?',
       "body",
       false
     );
@@ -788,7 +788,7 @@ const miiExportDownload = async (mii: MiiLocalforage, miiData: Mii) => {
       callback() {},
     },
     {
-      text: "Save MiiCreator data (Recommended)",
+      text: "Save MiiCreator data",
       async callback() {
         const blob = new Blob([miiData.encode()]);
         const url = URL.createObjectURL(blob);
@@ -847,33 +847,72 @@ const miiExportDownload = async (mii: MiiLocalforage, miiData: Mii) => {
       },
     },
     {
-      text: "Download FFSD file",
-      async callback() {
-        if (!(await miiFFSDWarning(miiData))) return;
-        const blob = new Blob([miiData.encodeFFSD()]);
-        const url = URL.createObjectURL(blob);
+      text: "Download other file types...",
+      callback(e) {
+        Modal.modal(
+          "Other download types",
+          "Choose a file type to download",
+          "body",
+          {
+            text: "Cancel",
+            callback(e) {
+              miiExportDownload(mii, miiData);
+            },
+          },
+          {
+            text: "Download FFSD file",
+            async callback() {
+              if (!(await miiFFSDWarning(miiData))) return;
+              const blob = new Blob([miiData.encodeFFSD()]);
+              const url = URL.createObjectURL(blob);
 
-        const a = document.createElement("a");
-        a.href = url;
-        a.target = "_blank";
-        a.download = miiData.miiName + ".ffsd";
-        document.body.appendChild(a);
-        a.click();
+              const a = document.createElement("a");
+              a.href = url;
+              a.target = "_blank";
+              a.download = miiData.miiName + ".ffsd";
+              document.body.appendChild(a);
+              a.click();
 
-        requestAnimationFrame(() => {
-          a.remove();
-        });
+              requestAnimationFrame(() => {
+                a.remove();
+              });
 
-        // free URL after some time
-        setTimeout(() => {
-          URL.revokeObjectURL(url);
-        }, 2000);
+              // free URL after some time
+              setTimeout(() => {
+                URL.revokeObjectURL(url);
+              }, 2000);
+            },
+          },
+          {
+            text: "Download Charinfo file",
+            async callback() {
+              //if (!(await miiColorConversionWarning(miiData))) return;
+              const blob = new Blob([miiData.encodeCharinfo()]);
+              const url = URL.createObjectURL(blob);
+
+              const a = document.createElement("a");
+              a.href = url;
+              a.target = "_blank";
+              a.download = miiData.miiName + ".charinfo";
+              document.body.appendChild(a);
+              a.click();
+
+              requestAnimationFrame(() => {
+                a.remove();
+              });
+
+              // free URL after some time
+              setTimeout(() => {
+                URL.revokeObjectURL(url);
+              }, 2000);
+            },
+          }
+        );
       },
     },
     {
       text: "Show other raw data formats",
       async callback() {
-        if (!(await miiFFSDWarning(miiData))) return;
         const modal = Modal.modal(
           "Miscellaneous Output Formats",
           "Click inside a code block to select it.",
@@ -888,6 +927,12 @@ const miiExportDownload = async (mii: MiiLocalforage, miiData: Mii) => {
         modal
           .qs(".modal-body")!
           .prependMany(
+            new Html("div").appendMany(
+              new Html("span").class("h4").text("Charinfo data (Hex)"),
+              new Html("pre")
+                .class("pre-wrap", "mb-0")
+                .text(miiData.encodeCharinfo().toString("hex"))
+            ),
             new Html("div").appendMany(
               new Html("span").class("h4").text("MiiC (Base64)"),
               new Html("pre")
