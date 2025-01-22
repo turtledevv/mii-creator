@@ -355,6 +355,10 @@ export function MiiPagedFeatureSet(set: FeatureSet) {
                   update();
                 });
 
+                featureRange.on("input", () => {
+                  playSound("slider_tick");
+                });
+
                 break;
               case FeatureSetType.Switch:
                 let featureSwitchItem = new Html("div")

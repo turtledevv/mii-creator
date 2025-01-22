@@ -38,6 +38,7 @@ import { FFLiDatabaseRandom_Get } from "../../external/ffl/FFLiDatabaseRandom";
 import { Settings } from "./Settings";
 import { getSetting } from "../../util/SettingsHelper";
 import { GLTFExporter } from "three/examples/jsm/Addons.js";
+import { playSound } from "../../class/audio/SoundManager";
 export const savedMiiCount = async () =>
   (await localforage.keys()).filter((k) => k.startsWith("mii-")).length;
 export const newMiiId = async () =>
@@ -163,6 +164,13 @@ export async function Library(highlightMiiId?: string) {
           src: "data:image/svg+xml," + encodeURIComponent(EditorIcons.error),
         });
         hasMiiErrored = true;
+      });
+      miiImage.on("load", () => {
+        setTimeout(() => {
+          // only play 50% of the time lol
+          if (RandomInt(2) !== 0) return;
+          playSound(`load${RandomInt(4) + 1}`);
+        }, RandomInt(200));
       });
 
       miiContainer.appendMany(miiImage, miiName).appendTo(libraryList);

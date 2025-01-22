@@ -1,5 +1,6 @@
 import Html from "@datkat21/html";
 import { AddButtonSounds } from "../../util/AddButtonSounds";
+import { playSound } from "../../class/audio/SoundManager";
 
 export type ModalButton = {
   text: string;
@@ -51,6 +52,7 @@ export default {
           )
             return;
           if (isClosing) return;
+          playSound("back");
           isClosing = true;
           x.classOn("closing");
           setTimeout(() => {
