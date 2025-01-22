@@ -3,7 +3,7 @@ import {
   MiiPagedFeatureSet,
 } from "../components/MiiPagedFeatureSet";
 import { MiiFavoriteColorLookupTable } from "../../constants/ColorTables";
-import { ArrayNum } from "../../util/NumberArray";
+import { ArrayNum } from "../../util/Numbers";
 import type { TabRenderInit } from "../../constants/TabRenderType";
 import { numToHex } from "../../util/NumberToHexString";
 import { RenderPart } from "../../class/MiiEditor";

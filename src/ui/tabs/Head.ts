@@ -8,7 +8,7 @@ import {
   MiiSwitchSkinColorList,
 } from "../../constants/ColorTables";
 import type { TabRenderInit } from "../../constants/TabRenderType";
-import { ArrayNum } from "../../util/NumberArray";
+import { ArrayNum } from "../../util/Numbers";
 import { RenderPart } from "../../class/MiiEditor";
 import {
   makeSeparatorFSI,

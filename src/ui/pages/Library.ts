@@ -20,7 +20,7 @@ import {
   MiiPagedFeatureSet,
 } from "../components/MiiPagedFeatureSet";
 import { downloadLink, saveArrayBuffer } from "../../util/downloadLink";
-import { ArrayNum } from "../../util/NumberArray";
+import { ArrayNum } from "../../util/Numbers";
 import {
   Material,
   MeshStandardMaterial,

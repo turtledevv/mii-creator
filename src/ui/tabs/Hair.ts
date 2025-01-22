@@ -5,7 +5,7 @@ import {
 import EditorIcons from "../../constants/EditorIcons";
 import { SwitchMiiColorTable } from "../../constants/ColorTables";
 import type { TabRenderInit } from "../../constants/TabRenderType";
-import { ArrayNum } from "../../util/NumberArray";
+import { ArrayNum } from "../../util/Numbers";
 import { RenderPart } from "../../class/MiiEditor";
 import {
   makeSeparatorFSI,
@@ -32,7 +32,7 @@ export function HairTab(data: TabRenderInit) {
             ArrayNum(132).map((k) => ({
               type: FeatureSetType.Icon,
               value: k,
-              icon: data.icons.hair[k], // `<img src="./assets/img/hair/${k}.png" width="84" height="84" />`,
+              icon: data.icons.hair[k], // `<img src="./assets/images/hair/${k}.png" width="84" height="84" />`,
               part: RenderPart.Head,
             })),
             MiiHairTable
