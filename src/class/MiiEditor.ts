@@ -424,7 +424,7 @@ export class MiiEditor {
         }
         Modal.alert(
           "Error",
-          "Will not save because there are errors in the following items:\n\n" +
+          "Will not save because there are problems with the following items:\n\n" +
             errorList.map((e) => `• ${e}`).join("\n")
         );
         return;

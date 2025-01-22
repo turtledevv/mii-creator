@@ -92,7 +92,11 @@ export class Mii3DScene {
 
     getSetting("shaderType").then((type) => {
       // glTF Loader hack only for FFL shader to force srgb-linear textures.
-      if (type === "lightDisabled" || type === "wiiu") {
+      if (
+        type === "lightDisabled" ||
+        type.startsWith("wiiu") ||
+        type === "switch"
+      ) {
         this.#gltfLoader = new GLTFLoader() as TrueGLTFLoader;
       } else {
         this.#gltfLoader = new TrueGLTFLoader();
@@ -188,11 +192,6 @@ export class Mii3DScene {
         this.focusCamera(CameraPosition.MiiHead, true);
       }, 200);
     }
-
-    // this.#controls.maxTargetRadius = 10;
-    // this.#controls.enableDamping = true;
-    // this.#controls.enablePan = false;
-    // this.#controls.enableZoom = false;
 
     this.animators.set("cameraControls", (time, delta) => {
       this.#controls.update(delta);
@@ -324,8 +323,8 @@ export class Mii3DScene {
     });
   }
   swapAnimation(newAnim: string, force: boolean = false) {
-    console.debug("swapAnimation() called:", newAnim);
     if (newAnim === this.currentAnim) return;
+    console.debug("swapAnimation() called:", newAnim);
     if (force !== true) {
       for (const [_, anim] of this.anim) {
         anim.fadeOut(0.2);
@@ -373,6 +372,7 @@ export class Mii3DScene {
     }
   }
   async #addBody() {
+    console.log("addBody()");
     const setupMiiBody = async (path: string, type: "m" | "f") => {
       const glb = await this.#gltfLoader.loadAsync(path);
 
@@ -439,6 +439,7 @@ export class Mii3DScene {
         this.#scene.getObjectByName("f")!.visible = false;
 
       glb.scene.rotation.set(0, 0, 0);
+      console.log(`setupBody("${path}", "${type}")`);
     };
 
     const bodyModel = (await getSetting("bodyModel")) as string;
@@ -613,7 +614,10 @@ export class Mii3DScene {
       const quaternion = new THREE.Quaternion();
       const scale = new THREE.Vector3();
       return () => {
-        const headBone = body.getObjectByName("head") as THREE.Bone;
+        let headBone = body.getObjectByName("head") as THREE.Bone;
+        if (headBone === undefined)
+          headBone = body.getObjectByName("Head") as THREE.Bone;
+
         if (!headBone) return;
         headBone.updateMatrixWorld(true);
 
@@ -736,7 +740,6 @@ export class Mii3DScene {
   async updateMiiHead(renderPart: RenderPart = RenderPart.Head) {
     if (!this.ready) {
       console.log("first time loading head");
-      // return;
     }
     let head = this.#scene.getObjectsByProperty("name", "MiiHead");
 
@@ -874,6 +877,7 @@ export class Mii3DScene {
             obj.parent!.remove(obj);
           });
           traverseAddShader(GLB.scene, this.mii);
+          console.debug("Traversing shader now");
 
           const headBone = this.#scene
             .getObjectByName(this.type)!
@@ -891,6 +895,7 @@ export class Mii3DScene {
             // Set the head model's position and rotation
             GLB.scene.position.copy(position);
             GLB.scene.setRotationFromQuaternion(quaternion);
+            console.debug("Positioning head to body");
             // GLB.scene.rotation.x -= Math.PI / 2;
           }
 

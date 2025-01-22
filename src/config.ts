@@ -22,7 +22,7 @@ export const Config = {
     // For fetching data from various sources.
     nnidRandomURL: `${nnidFetchOrigin}/mii_data_random`,
     // Caller has to encodeURIComponent before passing:
-    //nnidFetchURL: (nnid: string) => `${nnidFetchOrigin}/mii_data/${nnid}`,
+    nnidFetchURL: (nnid: string) => `${nnidFetchOrigin}/mii_data/${nnid}`,
     pnidFetchURL: (pnid: string) =>
       `${nnidFetchOrigin}/mii_data/${pnid}?api_id=1`,
   },

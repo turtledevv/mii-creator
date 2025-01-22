@@ -1,7 +1,7 @@
 import Html from "@datkat21/html";
 import localforage from "localforage";
 import { MiiEditor, MiiGender, RenderPart } from "../../class/MiiEditor";
-import Modal from "../components/Modal";
+import Modal, { buttonsOkCancel } from "../components/Modal";
 import Mii from "../../external/mii-js/mii";
 import { Buffer } from "../../../node_modules/buffer/index";
 import Loader from "../components/Loader";
@@ -18,6 +18,7 @@ import { CameraPosition, Mii3DScene, SetupType } from "../../class/3DScene";
 import {
   FeatureSetType,
   MiiPagedFeatureSet,
+  type FeatureSetEntry,
 } from "../components/MiiPagedFeatureSet";
 import { downloadLink, saveArrayBuffer } from "../../util/downloadLink";
 import { ArrayNum, RandomInt } from "../../util/Numbers";
@@ -43,14 +44,18 @@ export const savedMiiCount = async () =>
   (await localforage.keys()).filter((k) => k.startsWith("mii-")).length;
 export const newMiiId = async () =>
   `mii-${Date.now()}-${await savedMiiCount()}`;
-export const miiIconUrl = (mii: Mii, library: boolean = true) =>
-  `${Config.renderer.renderHeadshotURLNoParams}?data=${mii
-    .encodeStudio()
-    .toString(
-      "hex"
-    )}&shaderType=0&type=variableiconbody&width=180&verifyCharInfo=0&miic=${encodeURIComponent(
-    mii.encode().toString("base64")
-  )}&source=${library ? "library" : "lookalike"}`;
+export const miiIconUrl = (
+  mii: Mii,
+  library: boolean = true,
+  view: string = "variableiconbody",
+  width: number = 180
+) => {
+  let url = Config.renderer.renderHeadshotURLNoParams;
+  let params = new URLSearchParams();
+
+  params.set("data", mii.encodeStudio().toString("hex"));
+  return `${url}?${params.toString()}`;
+};
 
 let shutdown: () => any = () => {
   console.log("Shutdown was called but was not set yet!");
@@ -135,11 +140,11 @@ export async function Library(highlightMiiId?: string) {
 
           .appendTo(miiContainer);
 
-        if (miiData.normalMii === false) {
-          star.html(EditorIcons.special).style({ color: cPantsColorGoldHex });
-        }
         if (miiData.favorite === true) {
           star.html(EditorIcons.favorite).style({ color: cPantsColorRedHex });
+        }
+        if (miiData.normalMii === false) {
+          star.html(EditorIcons.special).style({ color: cPantsColorGoldHex });
         }
       }
 
@@ -149,11 +154,24 @@ export async function Library(highlightMiiId?: string) {
 
       miiContainer.on("click", async () => {
         if (hasMiiErrored === true) {
-          let result = await Modal.prompt(
+          Modal.modal(
             "Oops",
-            "This Mii hasn't loaded correctly. Do you still want to try and manage it?"
+            "This Mii hasn't loaded correctly. Do you still want to try and manage it?",
+            "body",
+            {
+              text: "Cancel",
+            },
+            {
+              callback(e) {
+                miiEditCallback();
+              },
+              text: "Yes",
+            },
+            {
+              text: "No",
+            }
           );
-          if (result === false) return;
+          return;
         }
 
         miiEditCallback();
@@ -216,7 +234,6 @@ export async function Library(highlightMiiId?: string) {
           "body",
           {
             text: "Cancel",
-            callback(e) {},
           },
           {
             text: "Download a copy",
@@ -279,7 +296,7 @@ export async function Library(highlightMiiId?: string) {
   sidebar.appendMany(
     new Html("div").class("sidebar-buttons").appendMany(
       AddButtonSounds(
-        new Html("button").text("Create New").on("click", async () => {
+        new Html("button").text("Create Mii").on("click", async () => {
           miiCreateDialog();
         })
       ),
@@ -323,11 +340,12 @@ type MiiLocalforage = {
 
 const miiCreateDialog = () => {
   const m = Modal.modal(
-    "Create New",
+    "New Mii",
     "How would you like to create the Mii?",
     "body",
     {
       text: "From Scratch",
+      type: "primary",
       callback: () => {
         miiCreateFromScratch();
       },
@@ -351,7 +369,7 @@ const miiCreateDialog = () => {
       },
     },
     {
-      text: "Import FFSD/MiiCreator data",
+      text: "FFSD/MiiCreator data",
       callback: () => {
         let id: string;
         let modal = Modal.modal(
@@ -411,9 +429,47 @@ const miiCreateDialog = () => {
       },
     },
     {
+      text: "Enter NNID/PNID",
+      callback: () => {
+        Modal.modal(
+          "Enter NNID/PNID",
+          "Select a service to look up",
+          "body",
+          {
+            text: "Cancel",
+          },
+          {
+            text: "Enter Nintendo Network ID",
+            callback(e) {
+              miiCreateNNID();
+            },
+          },
+          {
+            text: "Enter Pretendo Network ID",
+            callback(e) {
+              miiCreatePNID();
+            },
+          }
+        );
+      },
+    },
+    {
+      text: "Choose a look-alike",
+      callback: () => {
+        miiCreateRandomFFL();
+      },
+    },
+    {
+      text: "Random NNID",
+      callback: () => {
+        miiCreateRandom();
+      },
+    },
+    {
       text: "Cancel",
     }
   );
+  m.qs(".modal-body")!.styleJs({ maxWidth: "600px" });
 };
 const miiCreateFromScratch = () => {
   function cb(gender: MiiGender) {
@@ -444,9 +500,45 @@ const miiCreateFromScratch = () => {
     }
   );
 };
+const miiCreateNNID = async () => {
+  const input = await Modal.input(
+    "Nintendo Network ID",
+    "Enter NNID of user..",
+    "Username",
+    "body",
+    false
+  );
+  if (input === false) {
+    return miiCreateDialog();
+  }
+
+  Loader.show();
+
+  let nnid = await fetch(
+    Config.dataFetch.nnidFetchURL(encodeURIComponent(input))
+  );
+
+  const result = await nnid.json();
+
+  Loader.hide();
+  if (result.error !== undefined) {
+    await Modal.alert("Error", `Couldn't get Mii: ${result.error}`);
+    return;
+  }
+
+  shutdown();
+  new MiiEditor(
+    0,
+    async (m, shouldSave) => {
+      if (shouldSave === true) await localforage.setItem(await newMiiId(), m);
+      Library();
+    },
+    result.data
+  );
+};
 const miiCreatePNID = async () => {
   const input = await Modal.input(
-    "Create New",
+    "Pretendo Network ID",
     "Enter PNID of user..",
     "Username",
     "body",
@@ -657,7 +749,7 @@ const miiCreateRandomFFL = async () => {
 const miiEdit = (mii: MiiLocalforage, miiData: Mii) => {
   return () => {
     const modal = Modal.modal(
-      "Mii Options",
+      miiData.miiName,
       "What would you like to do?",
       "body",
       {
@@ -825,7 +917,7 @@ const miiEdit = (mii: MiiLocalforage, miiData: Mii) => {
   };
 };
 
-const miiColorConversionWarning = async (miiData: Mii) => {
+const miiQRConversionWarning = async (miiData: Mii) => {
   if (miiData.hasExtendedColors() === true) {
     let result = await Modal.prompt(
       "Warning",
@@ -857,9 +949,9 @@ const miiExport = (mii: MiiLocalforage, miiData: Mii) => {
     "What would you like to do?",
     "body",
     {
-      text: "Generate QR code",
+      text: "Save Mii as QR Code",
       async callback() {
-        if (!(await miiColorConversionWarning(miiData))) return;
+        if (!(await miiQRConversionWarning(miiData))) return;
         // hack: force FFL shader for QR codes by changing the setting
         const setting = await getSetting("shaderType");
         await localforage.setItem("settings_shaderType", "wiiu");
@@ -885,7 +977,6 @@ const miiExport = (mii: MiiLocalforage, miiData: Mii) => {
     },
     {
       text: "Cancel",
-      async callback() {},
     }
   );
 };
@@ -942,7 +1033,7 @@ const miiExportRender = async (mii: MiiLocalforage, miiData: Mii) => {
 
 const miiExportDownload = async (mii: MiiLocalforage, miiData: Mii) => {
   Modal.modal(
-    "Mii Export",
+    "Export Mii",
     "How would you like to save the Mii?",
     "body",
     {
@@ -1083,7 +1174,7 @@ const miiExportDownload = async (mii: MiiLocalforage, miiData: Mii) => {
 
         modal
           .qs(".modal-content")!
-          .style({ "max-height": "unset", "max-width": "600px" });
+          .style({ "max-height": "100vh", "max-width": "600px" });
         modal
           .qs(".modal-body")!
           .prependMany(
@@ -1124,7 +1215,7 @@ const miiExportDownload = async (mii: MiiLocalforage, miiData: Mii) => {
 };
 
 export async function customRender(miiData: Mii) {
-  const modal = Modal.modal("Prepare Render", "", "body", {
+  const modal = Modal.modal("Custom Render", "", "body", {
     text: "Cancel",
   });
   const body = modal.qs(".modal-body")!.classOn("responsive-row-lg").clear();
@@ -1138,7 +1229,7 @@ export async function customRender(miiData: Mii) {
     .style({
       display: "flex",
       flex: "1",
-      background: "var(--container)",
+      background: "var(--container-solid)",
       "border-radius": "12px",
       "flex-shrink": "0",
       height: "100%",
@@ -1251,7 +1342,7 @@ export async function customRender(miiData: Mii) {
     onChange(mii, forceRender, part) {
       configuration = mii as any;
       updateConfiguration();
-      console.log("updated", configuration);
+      // console.log("updated", configuration);
       oldConfiguration = Object.assign({}, configuration);
     },
   })
@@ -1305,7 +1396,7 @@ export async function customRender(miiData: Mii) {
     }
 
     // Only update expression when expression is changed.
-    console.log(oldConfiguration.expression, configuration.expression);
+    // console.log(oldConfiguration.expression, configuration.expression);
     if (oldConfiguration.expression !== configuration.expression) {
       scene.traverseAddFaceMaterial(
         scene.getHead() as Mesh,
@@ -1327,8 +1418,8 @@ export async function customRender(miiData: Mii) {
   //@ts-expect-error
   window.scene = scene;
 
-  scene.init().then(() => {
-    scene.updateMiiHead();
+  scene.init().then(async () => {
+    await scene.updateMiiHead();
     scene.focusCamera(CameraPosition.MiiFullBody, true, false);
     parentBox.append(scene.getRendererElement());
   });
@@ -1361,7 +1452,7 @@ export async function customRender(miiData: Mii) {
     // Firstly, fix up the materials?
     let i = 0;
     let mats = new Map<number, any>();
-    scene.getScene().traverse((o) => {
+    scene.getScene().traverse(async (o) => {
       if ((o as Mesh).isMesh !== true) return;
 
       const m = o as Mesh;
@@ -1376,7 +1467,7 @@ export async function customRender(miiData: Mii) {
 
       if (
         // Both of these internally use FFL shader
-        shaderSetting === "wiiu" ||
+        shaderSetting.startsWith("wiiu") ||
         shaderSetting === "lightDisabled"
       ) {
         map = (m.material as ShaderMaterial).uniforms.s_texture.value;
