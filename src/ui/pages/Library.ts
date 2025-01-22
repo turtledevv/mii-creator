@@ -23,8 +23,11 @@ import {
 import { downloadLink, saveArrayBuffer } from "../../util/downloadLink";
 import { ArrayNum, RandomInt } from "../../util/Numbers";
 import {
-  Material,
+  CanvasTexture,
+  Color,
+  MeshPhysicalMaterial,
   MeshStandardMaterial,
+  Vector3,
   type Mesh,
   type ShaderMaterial,
   type Texture,
@@ -47,6 +50,7 @@ import {
   startScanner,
 } from "../../util/DecodeQRCode";
 import { playSound } from "../../class/audio/SoundManager";
+import { sRGB } from "../../util/Color";
 export const savedMiiCount = async () =>
   (await localforage.keys()).filter((k) => k.startsWith("mii-")).length;
 export const newMiiId = async () =>
@@ -1147,9 +1151,187 @@ const miiFFSDWarning = async (miiData: Mii) => {
 
 const miiExport = (mii: MiiLocalforage, miiData: Mii) => {
   Modal.modal(
-    "Mii Export",
+    "Render Mii",
     "What would you like to do?",
     "body",
+    {
+      text: "Download 3D head model",
+      async callback() {
+        const holder = new Html("div").style({ opacity: "0" });
+        const scene = new Mii3DScene(
+          miiData,
+          holder.elm,
+          SetupType.Screenshot,
+          (renderer) => {},
+          true
+        );
+        // hide body
+        scene.init().then(async () => {
+          await scene.updateMiiHead();
+          scene.getScene().getObjectByName("m")!.visible = false;
+          scene.getScene().getObjectByName("f")!.visible = false;
+
+          const shaderSetting = await getSetting("shaderType");
+          // const bodyModelHands = await getSetting("bodyModelHands");
+
+          if (shaderSetting === "none") {
+            const result = await Modal.prompt(
+              "Notice",
+              "3D model export looks best when using the Wii U shader, which you aren't using.\nThis may result in incorrect color output. Do you still want to continue?",
+              "body"
+            );
+            if (result === false) return;
+          }
+
+          // Firstly, fix up the materials?
+          let i = 0;
+          let mats = new Map<number, any>();
+          scene.getScene().traverse(async (o) => {
+            if ((o as Mesh).isMesh !== true) return;
+
+            const m = o as Mesh;
+
+            mats.set(i, m.material);
+
+            console.log(m.name, m.geometry.userData);
+
+            // this depends on shader setting..
+            let map: Texture | null = null;
+            const userData = m.geometry.userData;
+
+            if (
+              // Both of these internally use FFL shader
+              shaderSetting.startsWith("wiiu") ||
+              shaderSetting === "lightDisabled"
+            ) {
+              map = (m.material as ShaderMaterial).uniforms.s_texture.value;
+
+              // if (bodyModelHands) {
+              //   if (m.name === "hands_m" || m.name === "hands_f") {
+              //     (m.material as ShaderMaterial).uniforms.u_const1.value =
+              //       new Vector4(...scene.handColor, 1);
+              //   }
+              // }
+              if (map) {
+                // Wii U shader textures need to be converted from linear to sRGB
+
+                // Create a temporary canvas
+                const canvas = document.createElement("canvas");
+                const context = canvas.getContext("2d")!;
+
+                // Set canvas dimensions
+                canvas.width = map.image.width;
+                canvas.height = map.image.height;
+
+                // Draw the texture to the canvas
+                context.drawImage(map.image, 0, 0);
+
+                // Get image data from the canvas
+                const imageData = context.getImageData(
+                  0,
+                  0,
+                  canvas.width,
+                  canvas.height
+                );
+                const data = imageData.data;
+
+                // Convert from sRGB Linear to sRGB
+                for (let i = 0; i < data.length; i += 4) {
+                  // Extract RGB components
+                  let r = data[i] / 255;
+                  let g = data[i + 1] / 255;
+                  let b = data[i + 2] / 255;
+
+                  // Convert from sRGB Linear to sRGB
+                  r = sRGB(r);
+                  g = sRGB(g);
+                  b = sRGB(b);
+
+                  // Convert back to 0-255 range
+                  data[i] = Math.round(r * 255);
+                  data[i + 1] = Math.round(g * 255);
+                  data[i + 2] = Math.round(b * 255);
+                }
+
+                // Update the canvas with the modified image data
+                context.putImageData(imageData, 0, 0);
+
+                const newMap = new CanvasTexture(canvas);
+
+                // Make sure to apply previous map properties!
+                newMap.flipY = map.flipY;
+                newMap.wrapS = map.wrapS;
+                newMap.wrapT = map.wrapS;
+
+                // possible texture leak?
+                map = newMap;
+                map.needsUpdate = true;
+
+                // Re-generate mipmaps
+                map.needsUpdate = true;
+              }
+            } else if (shaderSetting === "switch") {
+              // Can't remember what the uniform for texture is on switch
+            } else {
+              // Prevent warning by assigning map to null if it is null
+              if ((m.material as MeshStandardMaterial).map !== null)
+                map = (m.material as MeshStandardMaterial).map;
+
+              // if (bodyModelHands) {
+              //   if (m.name === "hands_m" || m.name === "hands_f") {
+              //     (m.material as MeshBasicMaterial).color.set(
+              //       new Color(...scene.handColor)
+              //     );
+              //   }
+              // }
+            }
+
+            // Just use modulateColor from the userData
+            // because i can't be asked
+            function rgbaToHex(rgba: [number, number, number]) {
+              const [r, g, b] = rgba;
+              const intR = Math.round(r * 255);
+              const intG = Math.round(g * 255);
+              const intB = Math.round(b * 255);
+              const hexR = intR.toString(16).padStart(2, "0");
+              const hexG = intG.toString(16).padStart(2, "0");
+              const hexB = intB.toString(16).padStart(2, "0");
+              return Number(`0x${hexR}${hexG}${hexB}`);
+            }
+
+            m.material = new MeshPhysicalMaterial({
+              color: rgbaToHex(userData.modulateColor),
+              metalness: 1,
+              roughness: 1,
+
+              // For texture
+              alphaTest: 0.5,
+              map: map,
+            });
+
+            i++;
+          });
+
+          const exporter = new GLTFExporter();
+          exporter.parse(
+            scene.getScene(),
+            (gltf) => {
+              console.log("gltf", gltf);
+              if (gltf instanceof ArrayBuffer) {
+                saveArrayBuffer(gltf, miiData.miiName + "_head.glb");
+              }
+              scene.shutdown();
+            },
+            (error) => {
+              console.error("Oops, something went wrong:", error);
+            },
+            {
+              binary: true,
+            }
+          );
+        });
+      },
+    },
     {
       text: "Render presets",
       async callback() {
@@ -1247,42 +1429,6 @@ const miiExportDownload = async (mii: MiiLocalforage, miiData: Mii) => {
         setTimeout(() => {
           URL.revokeObjectURL(url);
         }, 2000);
-      },
-    },
-    {
-      text: "Download 3D head model",
-      async callback() {
-        const holder = new Html("div").style({ opacity: "0" });
-        const scene = new Mii3DScene(
-          miiData,
-          holder.elm,
-          SetupType.Screenshot,
-          (renderer) => {},
-          true
-        );
-        // hide body
-        scene.init().then(() => {
-          scene.getScene().getObjectByName("m")!.visible = false;
-          scene.getScene().getObjectByName("f")!.visible = false;
-
-          const exporter = new GLTFExporter();
-          exporter.parse(
-            scene.getScene(),
-            (gltf) => {
-              console.log("gltf", gltf);
-              if (gltf instanceof ArrayBuffer) {
-                saveArrayBuffer(gltf, miiData.miiName + "_head.glb");
-              }
-              scene.shutdown();
-            },
-            (error) => {
-              console.error("Oops, something went wrong:", error);
-            },
-            {
-              binary: true,
-            }
-          );
-        });
       },
     },
     {
@@ -1651,6 +1797,16 @@ export async function customRender(miiData: Mii) {
 
   async function save3DModel() {
     const shaderSetting = await getSetting("shaderType");
+    // const bodyModelHands = await getSetting("bodyModelHands");
+
+    if (shaderSetting === "none") {
+      const result = await Modal.prompt(
+        "Notice",
+        "3D model export looks best when using the Wii U shader, which you aren't using.\nThis may result in incorrect color output. Do you still want to continue?",
+        "body"
+      );
+      if (result === false) return;
+    }
     // Firstly, fix up the materials?
     let i = 0;
     let mats = new Map<number, any>();
@@ -1673,12 +1829,102 @@ export async function customRender(miiData: Mii) {
         shaderSetting === "lightDisabled"
       ) {
         map = (m.material as ShaderMaterial).uniforms.s_texture.value;
+
+        // if (bodyModelHands) {
+        //   if (m.name === "hands_m" || m.name === "hands_f") {
+        //     (m.material as ShaderMaterial).uniforms.u_const1.value =
+        //       new Vector4(...scene.handColor, 1);
+        //   }
+        // }
+        if (map) {
+          // Wii U shader textures need to be converted from linear to sRGB
+
+          // Create a temporary canvas
+          const canvas = document.createElement("canvas");
+          const context = canvas.getContext("2d")!;
+
+          document.body.appendChild(canvas);
+
+          // Set canvas dimensions
+          canvas.width = map.image.width;
+          canvas.height = map.image.height;
+
+          // Draw the texture to the canvas
+          context.drawImage(map.image, 0, 0);
+
+          // Get image data from the canvas
+          const imageData = context.getImageData(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+          );
+          const data = imageData.data;
+
+          // Convert from sRGB Linear to sRGB
+          for (let i = 0; i < data.length; i += 4) {
+            // Extract RGB components
+            let r = data[i] / 255;
+            let g = data[i + 1] / 255;
+            let b = data[i + 2] / 255;
+
+            // Convert from sRGB Linear to sRGB
+            r = sRGB(r);
+            g = sRGB(g);
+            b = sRGB(b);
+
+            // Convert back to 0-255 range
+            data[i] = Math.round(r * 255);
+            data[i + 1] = Math.round(g * 255);
+            data[i + 2] = Math.round(b * 255);
+          }
+
+          // Update the canvas with the modified image data
+          context.putImageData(imageData, 0, 0);
+
+          const newMap = new CanvasTexture(canvas);
+
+          // Make sure to apply previous map properties!
+          newMap.flipY = map.flipY;
+          newMap.wrapS = map.wrapS;
+          newMap.wrapT = map.wrapS;
+
+          // leak?
+          map = newMap;
+          map.needsUpdate = true;
+
+          // await new Promise((resolve) => {
+          //   createImageBitmap(canvas)
+          //     .then((imageBitmap) => {
+          //       // Assign the ImageBitmap to the map's source.data
+          //       // map!.source.data = imageBitmap;
+          //       console.log(map!.source.data);
+          //       // Re-generate mipmaps
+          //       map!.needsUpdate = true;
+          //       resolve(true);
+          //     })
+          //     .catch((error) => {
+          //       console.error("Error creating ImageBitmap:", error);
+          //     });
+          // });
+
+          // Re-generate mipmaps
+          map.needsUpdate = true;
+        }
       } else if (shaderSetting === "switch") {
         // Can't remember what the uniform for texture is on switch
       } else {
         // Prevent warning by assigning map to null if it is null
         if ((m.material as MeshStandardMaterial).map !== null)
           map = (m.material as MeshStandardMaterial).map;
+
+        // if (bodyModelHands) {
+        //   if (m.name === "hands_m" || m.name === "hands_f") {
+        //     (m.material as MeshBasicMaterial).color.set(
+        //       new Color(...scene.handColor)
+        //     );
+        //   }
+        // }
       }
 
       // Just use modulateColor from the userData
@@ -1694,7 +1940,7 @@ export async function customRender(miiData: Mii) {
         return Number(`0x${hexR}${hexG}${hexB}`);
       }
 
-      m.material = new MeshStandardMaterial({
+      m.material = new MeshPhysicalMaterial({
         color: rgbaToHex(userData.modulateColor),
         metalness: 1,
         roughness: 1,

@@ -8,6 +8,10 @@ import Mii from "../external/mii-js/mii";
 import {
   MiiFavoriteColorLookupTable,
   MiiFavoriteColorVec4Table,
+  MiiSwitchSkinColorSRGB,
+  MiiSwitchSkinColorLinear,
+  SwitchMiiColorTableLinear,
+  SwitchMiiColorTableSRGB,
 } from "../constants/ColorTables";
 import {
   cMaterialName,
@@ -610,6 +614,9 @@ export class Mii3DScene {
       // });
     };
 
+    const shaderSetting = await getSetting("shaderType");
+    const bodyModel = await getSetting("bodyModel");
+
     const makeHeadBoneUpdate = (body: THREE.Object3D) => {
       const quaternion = new THREE.Quaternion();
       const scale = new THREE.Vector3();
@@ -636,7 +643,112 @@ export class Mii3DScene {
       };
     };
 
-    const shaderSetting = await getSetting("shaderType");
+    const assignMaterial = async (
+      bodyN: THREE.Object3D<THREE.Object3DEventMap>,
+      type: string
+    ) => {
+      const isWiiUShader =
+        (shaderSetting.startsWith("wiiu") ||
+          shaderSetting === "lightDisabled") &&
+        this.shaderOverride === false;
+      const colorHands = await getSetting("bodyModelHands");
+
+      const nBody = bodyN
+        .getObjectByName(type)!
+        .getObjectByName("body_" + type)! as THREE.Mesh;
+      if (isWiiUShader)
+        (nBody.material as THREE.ShaderMaterial).uniforms.u_const1.value =
+          new THREE.Vector4(
+            ...MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor]
+          );
+      const nLegs = bodyN
+        .getObjectByName(type)!
+        .getObjectByName("legs_" + type)! as THREE.Mesh;
+      if (isWiiUShader)
+        (nLegs.material as THREE.ShaderMaterial).uniforms.u_const1.value =
+          new THREE.Vector4(...this.getPantsColor());
+
+      if (shaderSetting === "none" || this.shaderOverride) {
+        (nBody.material as THREE.MeshBasicMaterial).color.set(
+          MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor][0],
+          MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor][1],
+          MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor][2]
+        );
+        (nLegs.material as THREE.MeshBasicMaterial).color.set(
+          this.getPantsColor()[0],
+          this.getPantsColor()[1],
+          this.getPantsColor()[2]
+        );
+      }
+
+      const nHands = bodyN
+        .getObjectByName(type)!
+        .getObjectByName("hands_" + type)! as THREE.Mesh;
+
+      if (colorHands === true) {
+        let desiredColor: [number, number, number] = [1, 0, 0];
+
+        // previous revision of hand color guessing, keeping it here because it may be used later..?
+        // let head = this.#scene.getObjectByName("MiiHead");
+        // if (head) {
+        //   // attempt to get current skin color...
+        //   if (isWiiUShader) {
+        //     this.mii.skinColor
+        //     MiiSwitchSkinColorList
+        //     // desiredColor = (
+        //     //   (head.children[0] as THREE.Mesh).material as THREE.ShaderMaterial
+        //     // ).uniforms.u_const1.value;
+        //   } else {
+        //     const color = (
+        //       (head.children[0] as THREE.Mesh)
+        //         .material as THREE.MeshBasicMaterial
+        //     ).color;
+        //     desiredColor = [color.r, color.g, color.b, 1];
+        //   }
+        // } else {
+        //   console.log("OOOPS");
+        // }
+
+        // little bit hacky lol because "simple" shader depends on linear instead of sRGB colors.
+        if (this.mii.extFacePaintColor !== 0) {
+          if (shaderSetting === "none") {
+            desiredColor =
+              SwitchMiiColorTableLinear[this.mii.extFacePaintColor - 1];
+          } else {
+            desiredColor =
+              SwitchMiiColorTableSRGB[this.mii.extFacePaintColor - 1];
+          }
+        } else {
+          if (shaderSetting === "none") {
+            desiredColor = MiiSwitchSkinColorLinear[this.mii.skinColor];
+          } else {
+            desiredColor = MiiSwitchSkinColorSRGB[this.mii.skinColor];
+          }
+        }
+
+        // console.log(
+        //   `Desired Color: %c${JSON.stringify(desiredColor)}`,
+        //   `rgb(${desiredColor[0] * 255}, ${desiredColor[1] * 255}, ${
+        //     desiredColor[2] * 255
+        //   })`
+        // );
+
+        if (isWiiUShader) {
+          (nHands.material as THREE.ShaderMaterial).uniforms.u_const1.value =
+            new THREE.Vector4(...desiredColor, 1);
+        } else if (shaderSetting === "none" || this.shaderOverride) {
+          (nHands.material as THREE.MeshBasicMaterial).color.set(
+            desiredColor[0],
+            desiredColor[1],
+            desiredColor[2]
+          );
+        }
+
+        this.handColor = desiredColor;
+      } else {
+        nHands.material = nBody.material;
+      }
+    };
 
     switch (this.mii.gender) {
       // m
@@ -650,35 +762,7 @@ export class Mii3DScene {
         // Scale each bone except for body
         traverseBones(bodyM);
 
-        // ONLY KEEP BELOW IF USING SHADER MATERIAL, it will error if material is changed
-
-        const mBody = bodyM
-          .getObjectByName("m")!
-          .getObjectByName("body_m")! as THREE.Mesh;
-        if (shaderSetting === "wiiu" && this.shaderOverride === false)
-          (mBody.material as THREE.ShaderMaterial).uniforms.u_const1.value =
-            new THREE.Vector4(
-              ...MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor]
-            );
-        const mLegs = bodyM
-          .getObjectByName("m")!
-          .getObjectByName("legs_m")! as THREE.Mesh;
-        if (shaderSetting === "wiiu" && this.shaderOverride === false)
-          (mLegs.material as THREE.ShaderMaterial).uniforms.u_const1.value =
-            new THREE.Vector4(...this.getPantsColor());
-
-        if (shaderSetting === "none" || this.shaderOverride) {
-          (mBody.material as THREE.MeshBasicMaterial).color.set(
-            MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor][0],
-            MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor][1],
-            MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor][2]
-          );
-          (mLegs.material as THREE.MeshBasicMaterial).color.set(
-            this.getPantsColor()[0],
-            this.getPantsColor()[1],
-            this.getPantsColor()[2]
-          );
-        }
+        assignMaterial(bodyM, "m");
         break;
       // f
       case 1:
@@ -691,35 +775,7 @@ export class Mii3DScene {
         // Scale each bone except for body
         traverseBones(bodyF);
 
-        // KEEP BELOW IF USING SHADER MATERIAL, comment this section and uncomment the one below it to enable the one without shader material
-
-        const fBody = bodyF
-          .getObjectByName("f")!
-          .getObjectByName("body_f")! as THREE.Mesh;
-        if (shaderSetting === "wiiu" && this.shaderOverride === false)
-          (fBody.material as THREE.ShaderMaterial).uniforms.u_const1.value =
-            new THREE.Vector4(
-              ...MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor]
-            );
-        const fLegs = bodyF
-          .getObjectByName("f")!
-          .getObjectByName("legs_f")! as THREE.Mesh;
-        if (shaderSetting === "wiiu" && this.shaderOverride === false)
-          (fLegs.material as THREE.ShaderMaterial).uniforms.u_const1.value =
-            new THREE.Vector4(...this.getPantsColor());
-
-        if (shaderSetting === "none" || this.shaderOverride) {
-          (fBody.material as THREE.MeshBasicMaterial).color.set(
-            MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor][0],
-            MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor][1],
-            MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor][2]
-          );
-          (fLegs.material as THREE.MeshBasicMaterial).color.set(
-            this.getPantsColor()[0],
-            this.getPantsColor()[1],
-            this.getPantsColor()[2]
-          );
-        }
+        assignMaterial(bodyF, "f");
         break;
     }
   }
