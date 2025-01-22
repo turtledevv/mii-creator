@@ -6,7 +6,7 @@ import {
   MiiGlassesColorTable,
   SwitchMiiColorTable,
 } from "../../constants/ColorTables";
-import { ArrayNum } from "../../util/NumberArray";
+import { ArrayNum } from "../../util/Numbers";
 import type { TabRenderInit } from "../../constants/TabRenderType";
 import EditorIcons from "../../constants/EditorIcons";
 import { RenderPart } from "../../class/MiiEditor";
@@ -80,6 +80,7 @@ export function GlassesTab(data: TabRenderInit) {
               min: 0,
               max: 20,
               part: RenderPart.Head,
+              inverse: true
             },
             {
               type: FeatureSetType.Range,

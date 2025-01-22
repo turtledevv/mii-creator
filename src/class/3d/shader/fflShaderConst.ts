@@ -15,6 +15,26 @@ export enum cMaterialName {
   FFL_MODULATE_TYPE_SHAPE_BODY,
   FFL_MODULATE_TYPE_SHAPE_PANTS,
 }
+
+export const FFLBlinnMaterial: Partial<FFLShaderMaterial> = {
+  specularMode: 0,
+};
+export const FFLGlossMaterial: Partial<FFLShaderMaterial> = {
+  ambient: new THREE.Vector4(0.8, 0.8, 0.8, 1),
+  diffuse: new THREE.Vector4(0.8, 0.8, 0.8, 1),
+  specular: new THREE.Vector4(0.1, 0.1, 0.1, 1),
+  specularPower: 0.01,
+  specularMode: 0,
+};
+
+export type FFLShaderMaterial = {
+  ambient: THREE.Vector4;
+  diffuse: THREE.Vector4;
+  specular: THREE.Vector4;
+  specularPower: number;
+  specularMode: number;
+};
+
 export const cMaterialParam = [
   {
     // FFL_MODULATE_TYPE_SHAPE_FACELINE
@@ -113,6 +133,25 @@ export const cLightAmbient = new THREE.Vector4(0.73, 0.73, 0.73, 1.0);
 export const cLightDiffuse = new THREE.Vector4(0.6, 0.6, 0.6, 1.0);
 export const cLightSpecular = new THREE.Vector4(0.7, 0.7, 0.7, 1.0);
 
+export const cLightAmbientFFLIconWithBody = new THREE.Vector4(
+  0.5,
+  0.5,
+  0.5,
+  1.0
+);
+export const cLightDiffuseFFLIconWithBody = new THREE.Vector4(
+  0.9,
+  0.9,
+  0.9,
+  1.0
+);
+export const cLightSpecularFFLIconWithBody = new THREE.Vector4(
+  1.0,
+  1.0,
+  1.0,
+  1.0
+);
+
 // NWF lighting
 // export const cLightAmbient = new THREE.Vector4(0.5, 0.5, 0.5, 1.0);
 // export const cLightDiffuse = new THREE.Vector4(0.9, 0.9, 0.9, 1.0);
@@ -124,6 +163,9 @@ export const cLightDir = new THREE.Vector3(
   0.4226179123,
   0.7848858833
 );
+export const cLightDirGlossy = new THREE.Vector3(-0.35, 1, 0.8);
+export const cLightDirFFLIconWithBody = new THREE.Vector3(-0.5, 0.366, 0.785);
+// export const cLightDir = new THREE.Vector3(0, 0, 1);
 export const cRimColor = new THREE.Vector4(0.3, 0.3, 0.3, 1.0);
 export const cRimPower = 2.0;
 

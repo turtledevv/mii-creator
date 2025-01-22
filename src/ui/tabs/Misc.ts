@@ -24,75 +24,45 @@ export function MiscTab(data: TabRenderInit) {
         gap: "1rem",
       })
       .appendMany(
-        AddButtonSounds(
-          Button("Save & Exit", async () => {
-            if (data.editor.dirty === true)
-              Modal.modal(
-                "Save Mii",
-                "Would you like to save?",
-                "body",
-                {
-                  text: "Save & Exit",
-                  callback() {
-                    // If the Mii is special and we try to save, there's an error that we need to disable sharing
-                    if (getMii().normalMii === false)
-                      getMii().disableSharing = true;
-                    data.editor.shutdown();
-                  },
-                },
-                {
-                  text: "Exit without Saving",
-                  callback() {
-                    data.editor.shutdown(false);
-                  },
-                },
-                {
-                  text: "Cancel",
-                  callback() {},
-                }
-              );
-            else
-              Modal.modal(
-                "Quitting Editor",
-                "No changes were made. Are you sure you want to exit?",
-                "body",
-                {
-                  text: "Save & Exit",
-                  callback() {
-                    data.editor.shutdown();
-                  },
-                },
-                {
-                  text: "Exit without Saving",
-                  callback() {
-                    data.editor.shutdown(false);
-                  },
-                },
-                {
-                  text: "Cancel",
-                  callback() {},
-                }
-              );
-          })
-        ),
         Input(
           "Name",
           data.mii.miiName,
           // set
-          (name) => setProp("miiName", name),
+          (name) => setProp("miiName", name.trim()),
           // validate
-          (name) =>
-            Buf.from(name, "utf16le").length <= 0x14 &&
-            Buf.from(name, "utf16le").length !== 0,
+          (name) => {
+            const nameBuffer = Buf.from(name, "utf16le");
+
+            // Empty string check
+            let nameStr = nameBuffer.toString("utf16le");
+            if (nameStr.trim() === "") return false;
+
+            // Name length check
+            if (nameBuffer.length <= 0x14 && nameBuffer.length !== 0)
+              return true;
+
+            return false;
+          },
           data.editor
         ),
         Input(
           "Creator",
           data.mii.creatorName,
           // set
-          (creator) => setProp("creatorName", creator),
+          (creator) => setProp("creatorName", creator.trim()),
           // validate
-          (creator) => Buf.from(creator, "utf16le").length <= 0x14,
+          (name) => {
+            const nameBuffer = Buf.from(name, "utf16le");
+
+            // Empty string check
+            let nameStr = nameBuffer.toString("utf16le");
+            if (nameStr.trim() === "") return false;
+
+            // Name length check
+            if (nameBuffer.length <= 0x14) return true;
+
+            return false;
+          },
           data.editor
         )
       )

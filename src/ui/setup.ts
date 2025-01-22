@@ -8,15 +8,22 @@ import Modal from "./components/Modal";
 import { Library } from "./pages/Library";
 import Mii from "../external/mii-js/mii";
 import { MiiEditor } from "../class/MiiEditor";
-import { updateSettings } from "./pages/Settings";
+import { displayUpdateNotice, updateSettings } from "./pages/Settings";
 import { getMiiRender, MiiCustomRenderType } from "../util/miiImageUtils";
 import { Buffer } from "../../node_modules/buffer/index";
 import { SelectionLibrary } from "./pages/SelectionLibrary";
+import "../external/mii-frontend/all-kaitai-structs";
+import { getSetting, setSetting } from "../util/SettingsHelper";
+import { Config } from "../config";
+import Html from "@datkat21/html";
+import { AddButtonSounds } from "../util/AddButtonSounds";
 
 export async function setupUi() {
   let mm = getMusicManager();
 
   updateSettings(true);
+
+  displayUpdateNotice();
 
   // for U theme
   let state: "main" | "edit" = "main";
@@ -239,6 +246,7 @@ export async function setupUi() {
 
   document.addEventListener("keydown", (e) => {
     if (document.activeElement === document.body) {
+      if (e.ctrlKey || e.altKey || e.metaKey) return;
       if (e.code === "KeyS") {
         Modal.modal(
           "sound test",

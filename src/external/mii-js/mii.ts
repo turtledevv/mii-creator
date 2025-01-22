@@ -13,6 +13,7 @@ import {
   ToVer3GlassTypeTable,
   ToVer3HairColorTable,
 } from "../../constants/ColorTables";
+import { RandomInt } from "../../util/Numbers";
 
 const STUDIO_RENDER_URL_BASE = Config.renderer.baseURL;
 const STUDIO_ASSET_URL_BASE = "https://mii-studio.akamaized.net/editor/1";
@@ -337,8 +338,8 @@ export default class Mii {
   public extHatType!: number;
   public extHatColor!: number;
   // currently reserved, will be optional common colors.
-  public extMiiC_v3_reserved1!: number;
-  public extMiiC_v3_reserved2!: number;
+  public extFacePaintColor!: number;
+  public extShirtColor!: number;
 
   public initBuffer!: Buffer;
 
@@ -521,8 +522,12 @@ export default class Mii {
       `Invalid Mii face type. Got ${this.faceType}, expected 0-11`
     );
     assert.ok(
-      Util.inRange(this.skinColor, Util.range(10)),
+      Util.inRange(this.skinColor, Util.range(1000)),
       `Invalid Mii skin color. Got ${this.skinColor}, expected 0-10`
+    );
+    assert.ok(
+      Util.inRange(this.extFacePaintColor, Util.range(110)),
+      `Invalid Mii face paint color. Got ${this.skinColor}, expected 0-109`
     );
     assert.ok(
       Util.inRange(this.wrinklesType, Util.range(12)),
@@ -824,11 +829,15 @@ export default class Mii {
     if (this.bitStream.length / 8 > 0x69) {
       this.extHatColor = this.bitStream.readUint8();
     }
-    if (this.bitStream.length / 8 > 0x70) {
-      this.extMiiC_v3_reserved1 = this.bitStream.readUint8();
+    if (this.bitStream.length / 8 > 0x6a) {
+      this.extFacePaintColor = this.bitStream.readUint8();
+    } else {
+      this.extFacePaintColor = 0;
     }
-    if (this.bitStream.length / 8 > 0x71) {
-      this.extMiiC_v3_reserved2 = this.bitStream.readUint8();
+    if (this.bitStream.length / 8 > 0x6b) {
+      this.extShirtColor = this.bitStream.readUint8();
+    } else {
+      this.extShirtColor = 0;
     }
 
     if (this.extFacelineColor) this.trueSkinColor = this.extFacelineColor;
@@ -953,9 +962,9 @@ export default class Mii {
     // Some custom CUSTOM data
     this.bitStream.writeUint8(this.extHatType);
     this.bitStream.writeUint8(this.extHatColor);
-    // currently reserved, will be common colors
-    this.bitStream.writeUint8(this.extMiiC_v3_reserved1);
-    this.bitStream.writeUint8(this.extMiiC_v3_reserved2);
+    // MiiC v3 fields
+    this.bitStream.writeUint8(this.extFacePaintColor);
+    this.bitStream.writeUint8(this.extShirtColor);
 
     // console.log(
     //   "Wrote 8 extra bytes for NfpStoreDataExtention:",
@@ -1157,7 +1166,12 @@ export default class Mii {
     encodeMiiPart(this.eyebrowType);
     encodeMiiPart(this.eyebrowSpacing);
     encodeMiiPart(this.eyebrowYPosition);
-    encodeMiiPart(this.trueSkinColor);
+    if (this.extFacePaintColor !== 0) {
+      encodeMiiPart(this.extFacePaintColor + 9);
+    } else {
+      encodeMiiPart(this.trueSkinColor);
+    }
+
     encodeMiiPart(this.makeupType);
     encodeMiiPart(this.faceType);
     encodeMiiPart(this.wrinklesType);
@@ -1211,6 +1225,122 @@ export default class Mii {
     encodeMiiPart(this.noseYPosition);
 
     return miiStudioData;
+  }
+
+  // Charinfo encoding function courtesy of Timimimi
+  public encodeCharinfo(): Buffer {
+    this.validate(); // * Don't write invalid Mii data
+
+    // TODO - Maybe create a new stream instead of modifying the original?
+    this.bitStream.bitSeek(0);
+
+    this.bitStream.writeUint8(RandomInt(255));
+    this.bitStream.writeUint8(RandomInt(255));
+    this.bitStream.writeUint8(RandomInt(255));
+    this.bitStream.writeUint8(RandomInt(255));
+    this.bitStream.writeUint8(RandomInt(255));
+    this.bitStream.writeUint8(RandomInt(255));
+    this.bitStream.writeUint8(RandomInt(255));
+    this.bitStream.writeUint8(RandomInt(255));
+    this.bitStream.writeUint8(RandomInt(255));
+    this.bitStream.writeUint8(RandomInt(255));
+    this.bitStream.writeUint8(RandomInt(255));
+    this.bitStream.writeUint8(RandomInt(255));
+    this.bitStream.writeUint8(RandomInt(255));
+    this.bitStream.writeUint8(RandomInt(255));
+    this.bitStream.writeUint8(RandomInt(255));
+    this.bitStream.writeUint8(RandomInt(255));
+    //listen idk what those are and im testing this
+    this.bitStream.writeUTF16String(this.miiName);
+
+    this.bitStream.writeUint8(0);
+    this.bitStream.writeUint8(0);
+    this.bitStream.writeUint8(0);
+    // i mean. it works but.
+
+    this.bitStream.writeUint8(this.favoriteColor);
+    this.bitStream.writeUint8(this.gender);
+    this.bitStream.writeUint8(this.height);
+    this.bitStream.writeUint8(this.build);
+    this.bitStream.writeUint8(this.normalMii);
+    this.bitStream.writeUint8(this.regionLock); //region move? idk im putting this in now
+
+    this.bitStream.writeUint8(this.faceType);
+    this.bitStream.writeUint8(this.trueSkinColor);
+    this.bitStream.writeUint8(this.wrinklesType);
+    this.bitStream.writeUint8(this.makeupType);
+
+    this.bitStream.writeUint8(this.hairType);
+    //this.bitStream.writeUint8(this.trueHairColor);
+
+    if (this.trueHairColor == 0) {
+      this.bitStream.writeUint8(8);
+    } else {
+      this.bitStream.writeUint8(this.trueHairColor);
+    }
+
+    this.bitStream.writeUint8(this.flipHair);
+
+    this.bitStream.writeUint8(this.eyeType);
+    if (this.trueEyeColor > 5) {
+      this.bitStream.writeUint8(this.extEyeColor);
+    } else this.bitStream.writeUint8(this.fflEyeColor + 8);
+    this.bitStream.writeUint8(this.eyeScale);
+    this.bitStream.writeUint8(this.eyeVerticalStretch);
+    this.bitStream.writeUint8(this.eyeRotation);
+    this.bitStream.writeUint8(this.eyeSpacing);
+    this.bitStream.writeUint8(this.eyeYPosition);
+
+    this.bitStream.writeUint8(this.eyebrowType);
+    //this.bitStream.writeUint8(this.trueEyebrowColor);
+
+    if (this.trueEyebrowColor == 0) {
+      this.bitStream.writeUint8(8);
+    } else {
+      this.bitStream.writeUint8(this.trueEyebrowColor);
+    }
+
+    this.bitStream.writeUint8(this.eyebrowScale);
+    this.bitStream.writeUint8(this.eyebrowVerticalStretch);
+    this.bitStream.writeUint8(this.eyebrowRotation);
+    this.bitStream.writeUint8(this.eyebrowSpacing);
+    this.bitStream.writeUint8(this.eyebrowYPosition);
+
+    this.bitStream.writeUint8(this.noseType);
+    this.bitStream.writeUint8(this.noseScale);
+    this.bitStream.writeUint8(this.noseYPosition);
+
+    this.bitStream.writeUint8(this.mouthType);
+    if (this.trueMouthColor > 5) {
+      this.bitStream.writeUint8(this.extMouthColor);
+    } else this.bitStream.writeUint8(this.fflMouthColor + 19);
+    this.bitStream.writeUint8(this.mouthScale);
+    this.bitStream.writeUint8(this.mouthHorizontalStretch);
+    this.bitStream.writeUint8(this.mouthYPosition);
+
+    this.bitStream.writeUint8(this.trueFacialHairColor);
+    this.bitStream.writeUint8(this.beardType);
+    this.bitStream.writeUint8(this.mustacheType);
+    this.bitStream.writeUint8(this.mustacheScale);
+    this.bitStream.writeUint8(this.mustacheYPosition);
+    this.bitStream.writeUint8(this.trueGlassesType);
+    if (this.extGlassColor > 0) {
+      this.bitStream.writeUint8(this.trueGlassesColor);
+    } else {
+      if (this.fflGlassesColor === 0) this.bitStream.writeUint8(8);
+      else this.bitStream.writeUint8(this.fflGlassesColor + 13);
+    }
+    this.bitStream.writeUint8(this.glassesScale);
+    this.bitStream.writeUint8(this.glassesYPosition);
+    this.bitStream.writeUint8(this.moleEnabled);
+    this.bitStream.writeUint8(this.moleScale);
+    this.bitStream.writeUint8(this.moleXPosition);
+    this.bitStream.writeUint8(this.moleYPosition);
+
+    this.bitStream.writeUint8(0); //always zero
+
+    // pray that this flarking works
+    return Buffer.from(this.bitStream.view._view).slice(0, 0x58);
   }
 
   public studioUrl(

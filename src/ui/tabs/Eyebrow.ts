@@ -6,7 +6,7 @@ import {
   MiiHairColorTable,
   SwitchMiiColorTable,
 } from "../../constants/ColorTables";
-import { ArrayNum } from "../../util/NumberArray";
+import { ArrayNum } from "../../util/Numbers";
 import type { TabRenderInit } from "../../constants/TabRenderType";
 import EditorIcons from "../../constants/EditorIcons";
 import { RenderPart } from "../../class/MiiEditor";
@@ -67,7 +67,7 @@ export function EyebrowTab(data: TabRenderInit) {
             ),
           ],
         },
-        eyePosition: {
+        eyebrowPosition: {
           label: "Position",
           items: [
             {
@@ -80,6 +80,7 @@ export function EyebrowTab(data: TabRenderInit) {
               min: 3,
               max: 18,
               part: RenderPart.Face,
+              inverse: true
             },
             {
               type: FeatureSetType.Range,

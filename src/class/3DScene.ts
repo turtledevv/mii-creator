@@ -8,6 +8,10 @@ import Mii from "../external/mii-js/mii";
 import {
   MiiFavoriteColorLookupTable,
   MiiFavoriteColorVec4Table,
+  MiiSwitchSkinColorSRGB,
+  MiiSwitchSkinColorLinear,
+  SwitchMiiColorTableLinear,
+  SwitchMiiColorTableSRGB,
 } from "../constants/ColorTables";
 import {
   cMaterialName,
@@ -54,6 +58,8 @@ export class Mii3DScene {
   type: "m" | "f";
   cameraPan!: boolean;
   shaderOverride: boolean;
+  bodyModel!: string;
+  handColor!: [number, number, number];
 
   constructor(
     mii: Mii,
@@ -90,9 +96,17 @@ export class Mii3DScene {
     this.getRendererElement().classList.add("scene");
     this.setupType = setupType;
 
+    getSetting("bodyModel").then((type) => {
+      this.bodyModel = type;
+    });
+
     getSetting("shaderType").then((type) => {
       // glTF Loader hack only for FFL shader to force srgb-linear textures.
-      if (type === "lightDisabled" || type === "wiiu") {
+      if (
+        type === "lightDisabled" ||
+        type.startsWith("wiiu") ||
+        type === "switch"
+      ) {
         this.#gltfLoader = new GLTFLoader() as TrueGLTFLoader;
       } else {
         this.#gltfLoader = new TrueGLTFLoader();
@@ -189,11 +203,6 @@ export class Mii3DScene {
       }, 200);
     }
 
-    // this.#controls.maxTargetRadius = 10;
-    // this.#controls.enableDamping = true;
-    // this.#controls.enablePan = false;
-    // this.#controls.enableZoom = false;
-
     this.animators.set("cameraControls", (time, delta) => {
       this.#controls.update(delta);
     });
@@ -224,7 +233,8 @@ export class Mii3DScene {
   focusCamera(
     part: CameraPosition,
     force: boolean = false,
-    transition: boolean = true
+    transition: boolean = true,
+    onlyReturn: boolean = false
   ) {
     this.#controls.smoothTime = 0.2;
 
@@ -241,24 +251,34 @@ export class Mii3DScene {
     // }
 
     if (part === CameraPosition.MiiFullBody) {
-      pos.y = 10;
-      this.#controls.moveTo(pos.x, pos.y, pos.z, transition);
-      this.#controls.rotateTo(0, Math.PI / 2, transition);
-      this.#controls.dollyTo(35, transition);
-      if (this.cameraPan === false) {
-        this.#controls.dollyTo(120, transition);
+      if (body !== undefined && head !== undefined) {
+        const box = new THREE.Box3().setFromObject(body);
+        const box2 = new THREE.Box3().setFromObject(head);
+        pos.y = box2.max.y / 2;
       }
+      if (onlyReturn === false) {
+        this.#controls.moveTo(pos.x, pos.y, pos.z, transition);
+        this.#controls.rotateTo(0, Math.PI / 2, transition);
+        this.#controls.dollyTo(40, transition);
+        if (this.cameraPan === false) {
+          this.#controls.dollyTo(120, transition);
+        }
+      }
+      return pos;
     } else if (part === CameraPosition.MiiHead) {
       if (body !== undefined) {
         const box = new THREE.Box3().setFromObject(body);
         pos.y = box.max.y - box.min.y;
       }
-      this.#controls.moveTo(pos.x, pos.y + 2, pos.z, transition);
-      this.#controls.rotateTo(0, Math.PI / 2, transition);
-      this.#controls.dollyTo(25, transition);
-      if (this.cameraPan === false) {
-        this.#controls.dollyTo(100, transition);
+      if (onlyReturn === false) {
+        this.#controls.moveTo(pos.x, pos.y + 2, pos.z, transition);
+        this.#controls.rotateTo(0, Math.PI / 2, transition);
+        this.#controls.dollyTo(25, transition);
+        if (this.cameraPan === false) {
+          this.#controls.dollyTo(100, transition);
+        }
       }
+      return pos;
     }
   }
   playEndingAnimation() {
@@ -324,8 +344,8 @@ export class Mii3DScene {
     });
   }
   swapAnimation(newAnim: string, force: boolean = false) {
-    console.debug("swapAnimation() called:", newAnim);
     if (newAnim === this.currentAnim) return;
+    console.debug("swapAnimation() called:", newAnim);
     if (force !== true) {
       for (const [_, anim] of this.anim) {
         anim.fadeOut(0.2);
@@ -373,6 +393,7 @@ export class Mii3DScene {
     }
   }
   async #addBody() {
+    console.log("addBody()");
     const setupMiiBody = async (path: string, type: "m" | "f") => {
       const glb = await this.#gltfLoader.loadAsync(path);
 
@@ -411,6 +432,24 @@ export class Mii3DScene {
       // adds shader material
       else traverseMesh(gBodyMesh, this.mii);
 
+      const gHandsMesh = glb.scene.getObjectByName(
+        `hands_${type}`
+      )! as THREE.Mesh;
+      gHandsMesh.geometry.userData = {
+        cullMode: 1,
+        modulateColor: MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor],
+        modulateMode: 0,
+        modulateType: cMaterialName.FFL_MODULATE_TYPE_SHAPE_BODY,
+      };
+      if (this.shaderOverride)
+        gHandsMesh.material = new THREE.MeshStandardMaterial({
+          roughness: 1,
+          metalness: 1,
+          color: MiiFavoriteColorLookupTable[this.mii.favoriteColor],
+        });
+      // adds shader material
+      else traverseMesh(gHandsMesh, this.mii);
+
       const gLegsMesh = glb.scene.getObjectByName(
         `legs_${type}`
       )! as THREE.Mesh;
@@ -439,13 +478,14 @@ export class Mii3DScene {
         this.#scene.getObjectByName("f")!.visible = false;
 
       glb.scene.rotation.set(0, 0, 0);
+      console.log(`setupBody("${path}", "${type}")`);
     };
 
     const bodyModel = (await getSetting("bodyModel")) as string;
 
     const loaders = [
-      setupMiiBody(`./assets/mdl/miiBodyM_${bodyModel}.glb`, "m"),
-      setupMiiBody(`./assets/mdl/miiBodyF_${bodyModel}.glb`, "f"),
+      setupMiiBody(`./assets/models/miiBodyM_${bodyModel}.glb`, "m"),
+      setupMiiBody(`./assets/models/miiBodyF_${bodyModel}.glb`, "f"),
     ];
 
     await Promise.all(loaders);
@@ -609,11 +649,17 @@ export class Mii3DScene {
       // });
     };
 
+    const shaderSetting = await getSetting("shaderType");
+    const bodyModel = await getSetting("bodyModel");
+
     const makeHeadBoneUpdate = (body: THREE.Object3D) => {
       const quaternion = new THREE.Quaternion();
       const scale = new THREE.Vector3();
       return () => {
-        const headBone = body.getObjectByName("head") as THREE.Bone;
+        let headBone = body.getObjectByName("head") as THREE.Bone;
+        if (headBone === undefined)
+          headBone = body.getObjectByName("Head") as THREE.Bone;
+
         if (!headBone) return;
         headBone.updateMatrixWorld(true);
 
@@ -627,12 +673,120 @@ export class Mii3DScene {
           this.#scene
             .getObjectByName("MiiHead")!
             .setRotationFromQuaternion(quaternion);
-          // this.#scene.getObjectByName("MiiHead")!.rotation.x -= Math.PI / 2;
+          if (bodyModel === "miitomo") {
+            // hacky
+            this.#scene.getObjectByName("MiiHead")!.rotation.z -= Math.PI / 2;
+          }
         }
       };
     };
 
-    const shaderSetting = await getSetting("shaderType");
+    const assignMaterial = async (
+      bodyN: THREE.Object3D<THREE.Object3DEventMap>,
+      type: string
+    ) => {
+      const isWiiUShader =
+        (shaderSetting.startsWith("wiiu") ||
+          shaderSetting === "lightDisabled") &&
+        this.shaderOverride === false;
+      const colorHands = await getSetting("bodyModelHands");
+
+      const nBody = bodyN
+        .getObjectByName(type)!
+        .getObjectByName("body_" + type)! as THREE.Mesh;
+      if (isWiiUShader)
+        (nBody.material as THREE.ShaderMaterial).uniforms.u_const1.value =
+          new THREE.Vector4(
+            ...MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor]
+          );
+      const nLegs = bodyN
+        .getObjectByName(type)!
+        .getObjectByName("legs_" + type)! as THREE.Mesh;
+      if (isWiiUShader)
+        (nLegs.material as THREE.ShaderMaterial).uniforms.u_const1.value =
+          new THREE.Vector4(...this.getPantsColor());
+
+      if (shaderSetting === "none" || this.shaderOverride) {
+        (nBody.material as THREE.MeshBasicMaterial).color.set(
+          MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor][0],
+          MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor][1],
+          MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor][2]
+        );
+        (nLegs.material as THREE.MeshBasicMaterial).color.set(
+          this.getPantsColor()[0],
+          this.getPantsColor()[1],
+          this.getPantsColor()[2]
+        );
+      }
+
+      const nHands = bodyN
+        .getObjectByName(type)!
+        .getObjectByName("hands_" + type)! as THREE.Mesh;
+
+      if (colorHands === true) {
+        let desiredColor: [number, number, number] = [1, 0, 0];
+
+        // previous revision of hand color guessing, keeping it here because it may be used later..?
+        // let head = this.#scene.getObjectByName("MiiHead");
+        // if (head) {
+        //   // attempt to get current skin color...
+        //   if (isWiiUShader) {
+        //     this.mii.skinColor
+        //     MiiSwitchSkinColorList
+        //     // desiredColor = (
+        //     //   (head.children[0] as THREE.Mesh).material as THREE.ShaderMaterial
+        //     // ).uniforms.u_const1.value;
+        //   } else {
+        //     const color = (
+        //       (head.children[0] as THREE.Mesh)
+        //         .material as THREE.MeshBasicMaterial
+        //     ).color;
+        //     desiredColor = [color.r, color.g, color.b, 1];
+        //   }
+        // } else {
+        //   console.log("OOOPS");
+        // }
+
+        // little bit hacky lol because "simple" shader depends on linear instead of sRGB colors.
+        if (this.mii.extFacePaintColor !== 0) {
+          if (shaderSetting === "none") {
+            desiredColor =
+              SwitchMiiColorTableLinear[this.mii.extFacePaintColor - 1];
+          } else {
+            desiredColor =
+              SwitchMiiColorTableSRGB[this.mii.extFacePaintColor - 1];
+          }
+        } else {
+          if (shaderSetting === "none") {
+            desiredColor = MiiSwitchSkinColorLinear[this.mii.skinColor];
+          } else {
+            desiredColor = MiiSwitchSkinColorSRGB[this.mii.skinColor];
+          }
+        }
+
+        // console.log(
+        //   `Desired Color: %c${JSON.stringify(desiredColor)}`,
+        //   `rgb(${desiredColor[0] * 255}, ${desiredColor[1] * 255}, ${
+        //     desiredColor[2] * 255
+        //   })`
+        // );
+
+        if (isWiiUShader) {
+          (nHands.material as THREE.ShaderMaterial).uniforms.u_const1.value =
+            new THREE.Vector4(...desiredColor, 1);
+        } else if (shaderSetting === "none" || this.shaderOverride) {
+          (nHands.material as THREE.MeshBasicMaterial).color.set(
+            desiredColor[0],
+            desiredColor[1],
+            desiredColor[2]
+          );
+        }
+
+        this.handColor = desiredColor;
+      } else {
+        nHands.material = nBody.material;
+      }
+    };
 
     switch (this.mii.gender) {
       // m
@@ -646,35 +800,7 @@ export class Mii3DScene {
         // Scale each bone except for body
         traverseBones(bodyM);
 
-        // ONLY KEEP BELOW IF USING SHADER MATERIAL, it will error if material is changed
-
-        const mBody = bodyM
-          .getObjectByName("m")!
-          .getObjectByName("body_m")! as THREE.Mesh;
-        if (shaderSetting === "wiiu" && this.shaderOverride === false)
-          (mBody.material as THREE.ShaderMaterial).uniforms.u_const1.value =
-            new THREE.Vector4(
-              ...MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor]
-            );
-        const mLegs = bodyM
-          .getObjectByName("m")!
-          .getObjectByName("legs_m")! as THREE.Mesh;
-        if (shaderSetting === "wiiu" && this.shaderOverride === false)
-          (mLegs.material as THREE.ShaderMaterial).uniforms.u_const1.value =
-            new THREE.Vector4(...this.getPantsColor());
-
-        if (shaderSetting === "none" || this.shaderOverride) {
-          (mBody.material as THREE.MeshBasicMaterial).color.set(
-            MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor][0],
-            MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor][1],
-            MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor][2]
-          );
-          (mLegs.material as THREE.MeshBasicMaterial).color.set(
-            this.getPantsColor()[0],
-            this.getPantsColor()[1],
-            this.getPantsColor()[2]
-          );
-        }
+        assignMaterial(bodyM, "m");
         break;
       // f
       case 1:
@@ -687,35 +813,7 @@ export class Mii3DScene {
         // Scale each bone except for body
         traverseBones(bodyF);
 
-        // KEEP BELOW IF USING SHADER MATERIAL, comment this section and uncomment the one below it to enable the one without shader material
-
-        const fBody = bodyF
-          .getObjectByName("f")!
-          .getObjectByName("body_f")! as THREE.Mesh;
-        if (shaderSetting === "wiiu" && this.shaderOverride === false)
-          (fBody.material as THREE.ShaderMaterial).uniforms.u_const1.value =
-            new THREE.Vector4(
-              ...MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor]
-            );
-        const fLegs = bodyF
-          .getObjectByName("f")!
-          .getObjectByName("legs_f")! as THREE.Mesh;
-        if (shaderSetting === "wiiu" && this.shaderOverride === false)
-          (fLegs.material as THREE.ShaderMaterial).uniforms.u_const1.value =
-            new THREE.Vector4(...this.getPantsColor());
-
-        if (shaderSetting === "none" || this.shaderOverride) {
-          (fBody.material as THREE.MeshBasicMaterial).color.set(
-            MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor][0],
-            MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor][1],
-            MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor][2]
-          );
-          (fLegs.material as THREE.MeshBasicMaterial).color.set(
-            this.getPantsColor()[0],
-            this.getPantsColor()[1],
-            this.getPantsColor()[2]
-          );
-        }
+        assignMaterial(bodyF, "f");
         break;
     }
   }
@@ -736,7 +834,6 @@ export class Mii3DScene {
   async updateMiiHead(renderPart: RenderPart = RenderPart.Head) {
     if (!this.ready) {
       console.log("first time loading head");
-      // return;
     }
     let head = this.#scene.getObjectsByProperty("name", "MiiHead");
 
@@ -781,6 +878,7 @@ export class Mii3DScene {
                 break;
             }
           }
+          params["verifyCharInfo"] = "0";
           const GLB = await this.#gltfLoader.loadAsync(
             tmpMii.studioUrl({
               ext: "glb",
@@ -802,7 +900,7 @@ export class Mii3DScene {
           try {
             if (this.mii.extHatType !== 0) {
               let hatModel = await this.#gltfLoader.loadAsync(
-                `./assets/mdl/hat_${this.mii.extHatType}.glb`
+                `./assets/models/hat_${this.mii.extHatType}.glb`
               );
 
               hatModel.scene.name = "HatScene";
@@ -874,10 +972,14 @@ export class Mii3DScene {
             obj.parent!.remove(obj);
           });
           traverseAddShader(GLB.scene, this.mii);
+          console.debug("Traversing shader now");
 
-          const headBone = this.#scene
-            .getObjectByName(this.type)!
-            .getObjectByName("head") as THREE.Bone;
+          const body = this.#scene.getObjectByName(this.type)!;
+
+          let headBone = body.getObjectByName("head") as THREE.Bone;
+          if (headBone === undefined)
+            headBone = body.getObjectByName("Head") as THREE.Bone;
+
           if (!headBone) return;
           headBone.updateMatrixWorld(true);
 
@@ -891,10 +993,22 @@ export class Mii3DScene {
             // Set the head model's position and rotation
             GLB.scene.position.copy(position);
             GLB.scene.setRotationFromQuaternion(quaternion);
+            console.debug("Positioning head to body");
             // GLB.scene.rotation.x -= Math.PI / 2;
           }
 
+          const bodyModelType = this.bodyModel;
           this.#scene.add(GLB.scene);
+          console.debug("Adding head to scene");
+
+          // Hacky fix for head being snapped in the wrong direction for 1 frame
+          if (bodyModelType === "miitomo") {
+            GLB.scene.rotation.z -= Math.PI / 2;
+          }
+
+          // setTimeout(() => {
+          //   debugger;
+          // }, 10);
         } catch (e) {
           console.error(e);
         }
@@ -917,17 +1031,19 @@ export class Mii3DScene {
     this.headReady = true;
     await this.updateBody();
   }
-  sparkle() {
-    // remove all previous sparkles lol
-    this.animations
-      .keys()
-      .filter((p) => p.startsWith("particle_"))
-      .forEach((key) => this.animations.delete(key));
 
-    // Load the sparkle texture
+  particles!: SparkleParticle[];
+  // particleTimeout!: Timer;
+  sparkle() {
+    if (!this.particles) this.particles = [];
+    // remove all previous sparkles lol
+    // this.animators
+    //   .keys()
+    //   .filter((p) => p.startsWith("particle_"))
+    //   .forEach((key) => this.animators.delete(key));
+
     const loader = new THREE.TextureLoader();
-    loader.load("./assets/img/star.png", (texture) => {
-      // Create a sparkle effect at the center of the scene
+    loader.load("./assets/images/star.png", (texture) => {
       const pos = new THREE.Vector3();
       const box = new THREE.Box3();
       this.#scene.getObjectByName("MiiHead")!.getWorldPosition(pos);
@@ -937,14 +1053,21 @@ export class Mii3DScene {
         new THREE.Vector3(0, pos.y + box.min.y / 2, 2),
         texture
       );
+      this.particles.push(particle);
       this.animators.set("particle_" + performance.now(), (_t, delta) =>
         particle.update(delta)
       );
       setTimeout(() => {
-        this.animations
+        this.particles.forEach((p, i) => {
+          p.dispose();
+        });
+        this.particles = [];
+        this.animators
           .keys()
           .filter((p) => p.startsWith("particle_"))
-          .forEach((key) => this.animations.delete(key));
+          .forEach((key) => {
+            this.animators.delete(key);
+          });
       }, 1000);
     });
   }

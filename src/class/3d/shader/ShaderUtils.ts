@@ -1,13 +1,21 @@
 import * as THREE from "three";
 import {
   cLightAmbient,
+  cLightAmbientFFLIconWithBody,
   cLightDiffuse,
+  cLightDiffuseFFLIconWithBody,
   cLightDir,
+  cLightDirFFLIconWithBody,
+  cLightDirGlossy,
   cLightSpecular,
+  cLightSpecularFFLIconWithBody,
   cMaterialName,
   cMaterialParam,
   cRimColor,
   cRimPower,
+  FFLBlinnMaterial,
+  FFLGlossMaterial,
+  type FFLShaderMaterial,
 } from "./fflShaderConst";
 import { fflFragmentShader, fflVertexShader } from "./FFLShader";
 import { switchFragmentShader, switchVertexShader } from "./SwitchShader";
@@ -56,20 +64,41 @@ export async function traverseMesh(node: THREE.Mesh, mpCharInfo: Mii) {
   if (userData.modulateType === undefined)
     console.warn(`Mesh "${node.name}" is missing "modulateType" in userData.`);
 
-  let modulateSkinning = userData.modulateSkinning;
-  if (userData.modulateSkinning === undefined) modulateSkinning = 0;
-
   // HACK for now: disable lighting on mask, glass, noseline
   // (Because there is some lighting bug affecting
   // those that does not happen in FFL-Testing)
   const lightEnable = modulateType > 5 ? false : true;
   // Select material parameter based on the modulate type, default to faceline
-  let materialParam =
+  let materialParam: FFLShaderMaterial =
     modulateType !== undefined
       ? modulateType && modulateType < 9
         ? cMaterialParam[modulateType]
         : cMaterialParam[0]
       : cMaterialParam[0];
+
+  let lightDir = cLightDir;
+
+  let lightAmbient: THREE.Vector4 = cLightAmbient,
+    lightDiffuse: THREE.Vector4 = cLightDiffuse,
+    lightSpecular: THREE.Vector4 = cLightSpecular;
+
+  // reused for extra materials
+  function modifyMaterialParam() {
+    // Wii U shader modifiers
+    if (shaderSetting === "wiiu_blinn") {
+      materialParam = { ...materialParam, ...FFLBlinnMaterial };
+    } else if (shaderSetting === "wiiu_gloss") {
+      materialParam = { ...materialParam, ...FFLGlossMaterial };
+      lightDir = cLightDirGlossy;
+    } else if (shaderSetting === "wiiu_ffliconwithbody") {
+      lightDir = cLightDirFFLIconWithBody;
+      lightAmbient = cLightAmbientFFLIconWithBody;
+      lightDiffuse = cLightDiffuseFFLIconWithBody;
+      lightSpecular = cLightSpecularFFLIconWithBody;
+    }
+  }
+
+  modifyMaterialParam();
 
   // Retrieve modulateMode, defaulting to constant color
   let modulateMode =
@@ -415,7 +444,7 @@ export async function traverseMesh(node: THREE.Mesh, mpCharInfo: Mii) {
       transparent: originalMaterial.transparent, // Handle transparency
       alphaTest: originalMaterial.alphaTest, // Handle alpha testing
     });
-  } else if (shaderSetting === "wiiu") {
+  } else if (shaderSetting.startsWith("wiiu")) {
     if (
       modulateType === cMaterialName.FFL_MODULATE_TYPE_SHAPE_BODY ||
       modulateType === cMaterialName.FFL_MODULATE_TYPE_SHAPE_PANTS
@@ -430,15 +459,18 @@ export async function traverseMesh(node: THREE.Mesh, mpCharInfo: Mii) {
             cMaterialParam[cMaterialName.FFL_MODULATE_TYPE_SHAPE_PANTS];
           break;
       }
+
+      modifyMaterialParam();
+
       finalMat = new THREE.ShaderMaterial({
         vertexShader: fflVertexShader,
         fragmentShader: fflFragmentShader,
         uniforms: {
           u_const1: { value: modulateColor },
-          u_light_ambient: { value: cLightAmbient },
-          u_light_diffuse: { value: cLightDiffuse },
-          u_light_specular: { value: cLightSpecular },
-          u_light_dir: { value: cLightDir },
+          u_light_ambient: { value: lightAmbient },
+          u_light_diffuse: { value: lightDiffuse },
+          u_light_specular: { value: lightSpecular },
+          u_light_dir: { value: lightDir },
           u_light_enable: { value: true },
           u_material_ambient: { value: materialParam.ambient },
           u_material_diffuse: { value: materialParam.diffuse },
@@ -467,9 +499,9 @@ export async function traverseMesh(node: THREE.Mesh, mpCharInfo: Mii) {
         fragmentShader: fflFragmentShader,
         uniforms: {
           u_const1: { value: modulateColor },
-          u_light_ambient: { value: cLightAmbient },
-          u_light_diffuse: { value: cLightDiffuse },
-          u_light_specular: { value: cLightSpecular },
+          u_light_ambient: { value: lightAmbient },
+          u_light_diffuse: { value: lightDiffuse },
+          u_light_specular: { value: lightSpecular },
           u_light_dir: { value: cLightDir },
           u_light_enable: { value: lightEnable },
           u_material_ambient: { value: materialParam.ambient },

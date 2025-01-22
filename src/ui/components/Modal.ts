@@ -1,11 +1,17 @@
 import Html from "@datkat21/html";
 import { AddButtonSounds } from "../../util/AddButtonSounds";
+import { playSound } from "../../class/audio/SoundManager";
 
 export type ModalButton = {
   text: string;
-  callback: (e: Event) => any | Promise<any>;
+  callback?: (e: Event) => any | Promise<any>;
   type?: string;
 };
+
+export const buttonsOkCancel = [
+  { callback() {}, text: "Cancel" },
+  { callback() {}, text: "OK" },
+];
 
 export default {
   modal: function (
@@ -28,7 +34,7 @@ export default {
 
     new Html("span").text(title).appendTo(modalHeader);
     if (content instanceof Html === false) {
-      new Html("span").html(content).appendTo(modalBody);
+      new Html("span").text(content).appendTo(modalBody);
     } else {
       content.appendTo(modalBody);
     }
@@ -36,8 +42,7 @@ export default {
 
     for (let i = 0; i < buttons.length; i++) {
       let button = buttons[i];
-      if (!button.text || !button.callback)
-        throw new Error("Invalid button configuration");
+      if (!button.text) throw new Error("Invalid button configuration");
 
       if (button.text === "Cancel") {
         let isClosing = false;
@@ -51,11 +56,12 @@ export default {
           )
             return;
           if (isClosing) return;
+          playSound("back");
           isClosing = true;
           x.classOn("closing");
           setTimeout(() => {
             x.cleanup();
-            button.callback(e);
+            if (typeof button.callback === "function") button.callback(e);
           }, 350);
         };
         AddButtonSounds(
@@ -66,7 +72,9 @@ export default {
           "hover",
           "back"
         );
-        x.on("click", closeButtonHandler);
+        x.on("click", (e) => {
+          closeButtonHandler(e);
+        });
         continue;
       }
       const b = AddButtonSounds(
@@ -75,7 +83,7 @@ export default {
           closingCallback();
           setTimeout(() => {
             x.cleanup();
-            button.callback(e);
+            if (typeof button.callback === "function") button.callback(e);
           }, 350);
         })
       );
@@ -172,6 +180,10 @@ export default {
         },
         {
           text: "No",
+          callback: (_: any) => res(false),
+        },
+        {
+          text: "Cancel",
           callback: (_: any) => res(false),
         }
       );

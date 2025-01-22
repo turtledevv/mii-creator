@@ -46,9 +46,7 @@ export class MusicManager {
     const theme =
       document.documentElement.dataset.theme !== undefined
         ? document.documentElement.dataset.theme
-        : (await localforage.getItem("settings_wiiu")) === true
-        ? "wiiu"
-        : "default";
+        : await localforage.getItem("settings_theme") as string;
     if (this.theme === theme) return;
     this.theme = theme;
 
@@ -57,15 +55,21 @@ export class MusicManager {
     if (theme === "wiiu") {
       this.setVolume(0.65);
       this.previousVolume = 0.65;
-      await this.loadSong("./assets/aud/ffl_app_menu.mp3", "mii_creator_music");
-      await this.loadSong("./assets/aud/ffl_app_edit.mp3", "mii_editor_music");
+      await this.loadSong(
+        "./assets/audio/ffl_app_menu.mp3",
+        "mii_creator_music"
+      );
+      await this.loadSong(
+        "./assets/audio/ffl_app_edit.mp3",
+        "mii_editor_music"
+      );
       //@ts-expect-error
       window.music = this;
     } else {
       this.setVolume(0.28);
       this.previousVolume = 0.28;
       await this.loadSong(
-        "./assets/aud/miimakermusic.mp3",
+        "./assets/audio/miimakermusic.mp3",
         "mii_creator_music"
       );
     }

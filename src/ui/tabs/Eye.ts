@@ -6,7 +6,7 @@ import {
   MiiEyeColorTable,
   SwitchMiiColorTable,
 } from "../../constants/ColorTables";
-import { ArrayNum } from "../../util/NumberArray";
+import { ArrayNum } from "../../util/Numbers";
 import type { TabRenderInit } from "../../constants/TabRenderType";
 import EditorIcons from "../../constants/EditorIcons";
 import { RenderPart } from "../../class/MiiEditor";
@@ -84,6 +84,7 @@ export function EyeTab(data: TabRenderInit) {
               min: 0,
               max: 18,
               part: RenderPart.Face,
+              inverse: true
             },
             {
               type: FeatureSetType.Range,

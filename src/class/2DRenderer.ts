@@ -50,8 +50,8 @@ export class Mii2DRenderer {
       this.mii.miiName
     )}&creatorName=${encodeURIComponent(this.mii.creatorName)}`;
 
-    const bodyImgURL = `./assets/img/2d/m-body-0.png`;
-    const pantImageURL = `./assets/img/2d/m-legs-gray.png`;
+    const bodyImgURL = `./assets/images/2d/m-body-0.png`;
+    const pantImageURL = `./assets/images/2d/m-legs-gray.png`;
 
     this.#headImage.src = headImgURL;
     this.#bodyImage.src = bodyImgURL;

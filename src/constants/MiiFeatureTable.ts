@@ -209,6 +209,8 @@ export const makeSeparatorGapThinFSI: () => any = () => ({
   html: new Html("div").class("separator-gap-thin"),
   select() {},
 });
+export const makeSeparatorGapThin = () =>
+  new Html("div").class("separator-gap-thin");
 export const makeHeaderFSI = (text: string) => ({
   type: FeatureSetType.Misc,
   html: new Html("div").text(text),

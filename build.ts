@@ -12,7 +12,7 @@ export async function compile(
   let output = (await Bun.build({
     entrypoints: [filePath],
     outdir: outputDir,
-    splitting: true,
+    splitting: false,
     emitDCEAnnotations: true,
     sourcemap: "linked",
     minify: {

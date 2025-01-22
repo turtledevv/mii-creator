@@ -18,6 +18,7 @@ export class SoundManager {
     this.gainNode.connect(this.audioContext.destination);
     this.muted = false;
     this.previousVolume = 0.28;
+    this.queue = new Set();
 
     const theme = document.documentElement.dataset.theme;
     let currentTheme = theme;
@@ -25,12 +26,12 @@ export class SoundManager {
       const theme = document.documentElement.dataset.theme;
       if (theme !== currentTheme) {
         if (theme === "wiiu") {
-          loadBaseSounds("./assets/aud/miiMakerU.zip");
+          loadBaseSounds("./assets/audio/miiMakerU.zip");
           this.previousVolume = 0.75;
           this.setVolume(0.75);
           this.previousVolume = 0.75;
         } else {
-          loadBaseSounds("./assets/aud/miiMakerSwitch.zip");
+          loadBaseSounds("./assets/audio/miiMakerSwitch.zip");
           this.previousVolume = 0.28;
           this.setVolume(0.28);
           this.previousVolume = 0.28;
@@ -54,6 +55,8 @@ export class SoundManager {
     this.soundBufs[name] = audioBuffer;
   }
 
+  queue!: Set<string>;
+
   playSound(name: string) {
     const soundBuffer = this.soundBufs[name];
     if (!soundBuffer) {
@@ -61,10 +64,18 @@ export class SoundManager {
       return;
     }
 
+    if (this.queue.has(name)) return;
+
     const source = this.audioContext.createBufferSource();
     source.buffer = soundBuffer;
     source.connect(this.gainNode);
     source.start();
+
+    this.queue.add(name);
+
+    setTimeout(() => {
+      this.queue.delete(name);
+    }, 50);
   }
 
   setVolume(volume: number) {
@@ -92,7 +103,7 @@ export const setupSoundManager = () => {
 };
 
 export const loadBaseSounds = async (
-  path: string = "./assets/aud/miiMakerSwitch.zip"
+  path: string = "./assets/audio/miiMakerSwitch.zip"
 ) => {
   const data = await fetch(path).then((j) => j.blob());
   const zip = await JSZip.loadAsync(data);

@@ -5,6 +5,11 @@ export const getSetting = async (key: string) => {
   const result = await localforage.getItem("settings_" + key);
   // Null fix
   if (result === null) {
-    return settingsInfo[key].default;
+    if (settingsInfo[key]) return settingsInfo[key].default;
+    else return null;
   } else return result;
+};
+
+export const setSetting = async (key: string, value: any) => {
+  return await localforage.setItem("settings_" + key, value);
 };

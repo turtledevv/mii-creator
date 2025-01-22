@@ -97,11 +97,15 @@ export class SparkleParticle {
 
     // Remove particles after duration is reached
     if (this.timeElapsed >= this.duration) {
-      this.scene.remove(this.particles);
-      this.particles.geometry.dispose();
-      this.particles.material.dispose();
-      return false; // Indicate that the sparkle effect is finished
+      this.dispose();
     }
     return true; // Sparkle effect is still active
+  }
+
+  dispose() {
+    this.scene.remove(this.particles);
+    this.particles.geometry.dispose();
+    this.particles.material.dispose();
+    return false; // Indicate that the sparkle effect is finished
   }
 }

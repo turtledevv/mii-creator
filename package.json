@@ -1,10 +1,10 @@
 {
-  "name": "mii-maker-real",
+  "name": "mii-creator",
   "module": "build.ts",
   "type": "module",
   "scripts": {
     "build-ts": "bun build.ts",
-    "serve": "bunx serve -l 3000 ./public"
+    "serve": "bunx serve -l 3000 -C ./public"
   },
   "devDependencies": {
     "@types/bun": "latest"

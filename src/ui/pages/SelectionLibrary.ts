@@ -134,7 +134,6 @@ export function SelectionLibrary(highlightMiiId?: string): Promise<Mii> {
             },
             {
               text: "Cancel",
-              async callback() {},
             }
           );
           modal
@@ -372,7 +371,7 @@ const miiCreateRandomFFL = async () => {
     )
   );
 
-  FFLiDatabaseRandom_Get(editMii);
+  FFLiDatabaseRandom_Get(editMii, {});
 
   new MiiEditor(
     0,

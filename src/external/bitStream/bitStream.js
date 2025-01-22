@@ -1,4 +1,4 @@
-//a@ts-nocheck
+//@ts-nocheck
 import { Buffer } from "../../../node_modules/buffer/index";
 
 /**********************************************************

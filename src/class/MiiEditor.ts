@@ -191,6 +191,7 @@ export class MiiEditor {
     const renderModeToggle = AddButtonSounds(
       new Html("button")
         .class("render-mode-toggle")
+        .style({ "z-index": "1" })
         .text(this.#renderModeText(nextRenderMode))
         .on("click", () => {
           renderModeToggle.text(this.#renderModeText(this.renderingMode));
@@ -345,6 +346,58 @@ export class MiiEditor {
         icon: EditorIcons.details,
         select: TabInit(MiscTab, CameraPosition.MiiFullBody),
       },
+      {
+        icon: EditorIcons.save + "<span>Save</span>",
+        type: "tab-save",
+        select: () => {
+          if (this.dirty === true)
+            Modal.modal(
+              "Save Mii",
+              "Would you like to save?",
+              "body",
+              {
+                text: "Save & Exit",
+                callback: () => {
+                  // If the Mii is special and we try to save, there's an error that we need to disable sharing
+                  if (getMii().normalMii === false)
+                    getMii().disableSharing = true;
+                  this.shutdown();
+                },
+              },
+              {
+                text: "Exit without Saving",
+                callback: () => {
+                  this.shutdown(false);
+                },
+              },
+              {
+                text: "Cancel",
+              }
+            );
+          else
+            Modal.modal(
+              "Quitting Editor",
+              "No changes were made. Are you sure you want to exit?",
+              "body",
+              {
+                text: "Save & Exit",
+                callback: () => {
+                  this.shutdown();
+                },
+              },
+              {
+                text: "Exit without Saving",
+                callback: () => {
+                  this.shutdown(false);
+                },
+              },
+              {
+                text: "Cancel",
+              }
+            );
+        },
+        update: false,
+      },
     ]);
     this.ui.tabList = tabs.list;
     this.ui.tabContent = tabs.content;
@@ -424,7 +477,7 @@ export class MiiEditor {
         }
         Modal.alert(
           "Error",
-          "Will not save because there are errors in the following items:\n\n" +
+          "Will not save because there are problems with the following items:\n\n" +
             errorList.map((e) => `• ${e}`).join("\n")
         );
         return;

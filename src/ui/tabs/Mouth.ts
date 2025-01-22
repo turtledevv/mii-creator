@@ -2,7 +2,7 @@ import {
   FeatureSetType,
   MiiPagedFeatureSet,
 } from "../components/MiiPagedFeatureSet";
-import { ArrayNum } from "../../util/NumberArray";
+import { ArrayNum } from "../../util/Numbers";
 import type { TabRenderInit } from "../../constants/TabRenderType";
 import EditorIcons from "../../constants/EditorIcons";
 import {
@@ -82,6 +82,7 @@ export function MouthTab(data: TabRenderInit) {
               min: 0,
               max: 18,
               part: RenderPart.Face,
+              inverse: true
             },
             {
               type: FeatureSetType.Range,

@@ -96,8 +96,24 @@ const RANDOM_GLASS_TYPE: any[] = [
   [78, 83, 0, 93, 0, 0, 98, 100, 0],
 ];
 
+// set these fields to "lock in" options when generating a random Mii
+export interface FFLiDatabaseRandom_GetInit {
+  age?: FFLAge;
+  gender?: FFLGender;
+  race?: FFLRace;
+  /** 0-11 */
+  favoriteColor?: number;
+  /** 0-7 */
+  hairColor?: number;
+  /** 0-5 */
+  eyeColor?: number;
+}
+
 // void FFLiDatabaseRandom::Get(FFLiCharInfo* pCharInfo, FFLGender gender, FFLAge age, FFLRace race)
-export function FFLiDatabaseRandom_Get(pCharInfo: Mii) {
+export function FFLiDatabaseRandom_Get(
+  pCharInfo: Mii,
+  fixedSettings: FFLiDatabaseRandom_GetInit
+) {
   // {
   let [pGender, pAge, pRace] = [
     FFLGender.FFL_GENDER_MAX,
@@ -105,6 +121,16 @@ export function FFLiDatabaseRandom_Get(pCharInfo: Mii) {
     FFLRace.FFL_RACE_MAX,
   ];
   let [gender, age, race] = DetermineParam(pGender, pAge, pRace);
+
+  if (fixedSettings.age !== undefined) {
+    age = fixedSettings.age;
+  }
+  if (fixedSettings.gender !== undefined) {
+    gender = fixedSettings.gender;
+  }
+  if (fixedSettings.race !== undefined) {
+    race = fixedSettings.race;
+  }
 
   console.log("Gender,age,race", gender, age, race);
 
@@ -146,11 +172,17 @@ export function FFLiDatabaseRandom_Get(pCharInfo: Mii) {
   pCharInfo.hairColor = GetRandomParts(
     RANDOM_PARTS_ARRAY_HAIR_COLOR[race][age]
   );
+  if (fixedSettings.hairColor !== undefined) {
+    pCharInfo.hairColor = fixedSettings.hairColor;
+  }
   pCharInfo.flipHair = Boolean(Math.ceil(Math.random() * 2));
   pCharInfo.eyeType = GetRandomParts(
     RANDOM_PARTS_ARRAY_EYE_TYPE[gender][age][race]
   );
   pCharInfo.eyeColor = GetRandomParts(RANDOM_PARTS_ARRAY_EYE_COLOR[race]);
+  if (fixedSettings.eyeColor !== undefined) {
+    pCharInfo.eyeColor = fixedSettings.eyeColor;
+  }
   pCharInfo.eyeScale = 4;
   pCharInfo.eyeVerticalStretch = 3;
   let eyeRotateOffsetTarget: number;
@@ -250,6 +282,9 @@ export function FFLiDatabaseRandom_Get(pCharInfo: Mii) {
   pCharInfo.favoriteColor = Math.floor(
     Math.random() * FFLFavoriteColor.FFL_FAVORITE_COLOR_MAX
   );
+  if (fixedSettings.favoriteColor !== undefined) {
+    pCharInfo.favoriteColor = fixedSettings.favoriteColor;
+  }
   pCharInfo.favorite = false;
   pCharInfo.allowCopying = true;
   pCharInfo.profanityFlag = false;
