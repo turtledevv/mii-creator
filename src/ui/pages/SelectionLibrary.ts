@@ -371,7 +371,7 @@ const miiCreateRandomFFL = async () => {
     )
   );
 
-  FFLiDatabaseRandom_Get(editMii);
+  FFLiDatabaseRandom_Get(editMii, {});
 
   new MiiEditor(
     0,
