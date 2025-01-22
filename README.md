@@ -1,6 +1,6 @@
 # Mii Creator App
 
-![Preview image](public/assets/img/preview.png)
+![Preview image](public/assets/images/preview_dark.png)
 
 Create and share Mii characters online with just a few clicks!
 
