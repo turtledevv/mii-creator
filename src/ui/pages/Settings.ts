@@ -191,9 +191,6 @@ for (const key in settingsInfo) {
 export async function Settings() {
   const modal = Modal.modal("Settings", "", "body", {
     text: "Cancel",
-    callback(e) {
-      // Library();
-    },
   });
 
   const modalBody = modal.qs(".modal-body")!.clear();

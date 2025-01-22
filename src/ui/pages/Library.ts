@@ -251,9 +251,6 @@ export async function Library(highlightMiiId?: string) {
                   type: "danger",
                 },
                 {
-                  callback(e) {
-                    /* ... */
-                  },
                   text: "No",
                 }
               );
@@ -269,14 +266,7 @@ export async function Library(highlightMiiId?: string) {
       "Error",
       `It appears that ${miiErrorCount} of your Miis have failed to load. Their data may be corrupted.\n\nIf you'd like to try and recover the Mii data, you can select the Miis with errors and choose to either save a copy or delete them.`,
       "body",
-      {
-        callback(e) {},
-        text: "Cancel",
-      },
-      {
-        callback(e) {},
-        text: "OK",
-      }
+      ...buttonsOkCancel
     );
   }
 
@@ -291,7 +281,6 @@ export async function Library(highlightMiiId?: string) {
       ),
       AddButtonSounds(
         new Html("button").text("Settings").on("click", async () => {
-          // await shutdown();
           Settings();
         })
       )
@@ -419,7 +408,6 @@ const miiCreateDialog = (shutdown: Function) => {
     },
     {
       text: "Cancel",
-      callback: () => {},
     }
   );
 };
@@ -657,7 +645,6 @@ const miiEdit = (mii: MiiLocalforage, shutdown: () => any, miiData: Mii) => {
       },
       {
         text: "Cancel",
-        async callback() {},
       }
     );
     modal
@@ -781,7 +768,6 @@ const miiExportRender = async (mii: MiiLocalforage, miiData: Mii) => {
     },
     {
       text: "Cancel",
-      callback() {},
     }
   );
 };
@@ -793,7 +779,6 @@ const miiExportDownload = async (mii: MiiLocalforage, miiData: Mii) => {
     "body",
     {
       text: "Cancel",
-      callback() {},
     },
     {
       text: "Save MiiCreator data",
@@ -925,8 +910,7 @@ const miiExportDownload = async (mii: MiiLocalforage, miiData: Mii) => {
           "Miscellaneous Output Formats",
           "Click inside a code block to select it.",
           "body",
-          { callback() {}, text: "Cancel" },
-          { callback() {}, text: "OK" }
+          ...buttonsOkCancel
         );
 
         modal
@@ -973,7 +957,6 @@ const miiExportDownload = async (mii: MiiLocalforage, miiData: Mii) => {
 
 export async function customRender(miiData: Mii) {
   const modal = Modal.modal("Prepare Render", "", "body", {
-    callback: () => {},
     text: "Cancel",
   });
   const body = modal.qs(".modal-body")!.classOn("responsive-row-lg").clear();

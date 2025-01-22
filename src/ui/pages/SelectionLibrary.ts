@@ -134,7 +134,6 @@ export function SelectionLibrary(highlightMiiId?: string): Promise<Mii> {
             },
             {
               text: "Cancel",
-              async callback() {},
             }
           );
           modal
