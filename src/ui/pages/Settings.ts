@@ -5,7 +5,11 @@ import localforage from "localforage";
 import { getMusicManager } from "../../class/audio/MusicManager";
 import { getSoundManager } from "../../class/audio/SoundManager";
 import { getSetting, setSetting } from "../../util/SettingsHelper";
-import { adjustShaderQuery, ShaderType, BodyType } from "../../constants/BodyShaderTypes";
+import {
+  adjustShaderQuery,
+  ShaderType,
+  BodyType,
+} from "../../constants/BodyShaderTypes";
 import { Config } from "../../config";
 
 export const updateSettings = async (force: boolean = false) => {
@@ -537,7 +541,7 @@ export async function replayUpdateNotice() {
 export async function displayUpdateNotice() {
   const seenKey = `has-seen-${Config.version.string}`;
   const seenValue = await getSetting(seenKey);
-  const notSeenLatest = (seenValue === false || seenValue === null);
+  const notSeenLatest = seenValue === false || seenValue === null;
 
   // https://stackoverflow.com/a/326076
   const isInIframe = window.self !== window.top;
@@ -546,14 +550,16 @@ export async function displayUpdateNotice() {
   const shouldSeeNotice =
     // Do not show to first time users
     //@ts-expect-error
-    !window.firstVisit // NOTE: src/l10n/manager.ts
+    !window.firstVisit && // NOTE: src/l10n/manager.ts
     // undefined = l10n manager did not run?, false = language key is null (never ran site)
-    && !isInIframe // Do not show to API users
+    !isInIframe && // Do not show to API users
     // Show if has-seen key doesn't exist
-    && notSeenLatest;
+    notSeenLatest;
 
-  //@ts-expect-error
-  console.log(`notSeenLatest: ${notSeenLatest}\nfirstVisit: ${window.firstVisit}\nshould see update notice?: ${shouldSeeNotice}`);
+  console.log(
+    //@ts-expect-error
+    `notSeenLatest: ${notSeenLatest}\nfirstVisit: ${window.firstVisit}\nshould see update notice?: ${shouldSeeNotice}`
+  );
 
   //@ts-expect-error
   if (window.firstVisit && !isInIframe) {

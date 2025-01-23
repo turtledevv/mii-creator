@@ -1,14 +1,15 @@
 // Adapted from my language manager used in Cherry Tree TV
 import localforage from "localforage";
 
-const langValue = await localforage.getItem("language");
+const langValue = (await localforage.getItem("language")) as string;
 let lang = langValue || "en_US";
 let strings: Record<string, any> = {};
 
 export const langList = ["en_US"];
 
 async function setLanguage(lang: string, isFirst: boolean) {
-  if (isFirst) { // call when page first opens?
+  if (isFirst) {
+    // call when page first opens?
     // HACK: get value of language since it
     // is always set and use as indicator
     // if this is the user's first visit.
@@ -17,12 +18,12 @@ async function setLanguage(lang: string, isFirst: boolean) {
   }
   // initialize the key to default
   if (isFirst && langValue === null) {
-      await localforage.setItem("language", lang);
+    await localforage.setItem("language", lang);
   }
 
   try {
     // this will fail if the lang doesn't exist:
-    let languageModule = (await import(`./${lang}.js`)).default;
+    let languageModule = (await import(`./lang/${lang}.js`)).default;
     if (isFirst) {
       // do not await on first set
       localforage.setItem("language", lang);
