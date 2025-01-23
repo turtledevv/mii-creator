@@ -4,8 +4,8 @@
 export enum BodyType {
   WiiU = "wiiu",
   Switch = "switch",
-  Miitomo = "miitomo"
-};
+  Miitomo = "miitomo",
+}
 // All body types are supported by backend renderer for now
 
 export enum ShaderType {
@@ -15,12 +15,12 @@ export enum ShaderType {
   Simple = "none",
   Miitomo = "miitomo",
   WiiUBlinn = "wiiu_blinn",
-  WiiUFFLIconWithBody = "wiiu_ffliconwithbody" ,
-  WiiUGloss = "wiiu_gloss"
+  WiiUFFLIconWithBody = "wiiu_ffliconwithbody",
+  WiiUToon = "wiiu_toon",
 }
 
 export function adjustShaderQuery(params: URLSearchParams, shader: ShaderType) {
-  switch(shader) {
+  switch (shader) {
     case ShaderType.WiiU:
     case ShaderType.Switch:
     case ShaderType.Miitomo:
@@ -30,7 +30,7 @@ export function adjustShaderQuery(params: URLSearchParams, shader: ShaderType) {
     case ShaderType.WiiUFFLIconWithBody:
       params.set("shaderType", "ffliconwithbody");
       break;
-    case ShaderType.WiiUGloss:
+    case ShaderType.WiiUToon:
       params.set("shaderType", "wiiu");
       break;
     case ShaderType.WiiUBlinn:

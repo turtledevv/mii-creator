@@ -88,7 +88,7 @@ export async function traverseMesh(node: THREE.Mesh, mpCharInfo: Mii) {
     // Wii U shader modifiers
     if (shaderSetting === ShaderType.WiiUBlinn) {
       materialParam = { ...materialParam, ...FFLBlinnMaterial };
-    } else if (shaderSetting === ShaderType.WiiUGloss) {
+    } else if (shaderSetting === ShaderType.WiiUToon) {
       materialParam = { ...materialParam, ...FFLGlossMaterial };
       lightDir = cLightDirGlossy;
     } else if (shaderSetting === ShaderType.WiiUFFLIconWithBody) {

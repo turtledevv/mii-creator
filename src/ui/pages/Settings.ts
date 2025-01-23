@@ -182,7 +182,7 @@ export const settingsInfo: Record<string, any> = {
     choices: [
       { label: "No Lighting", value: ShaderType.LightDisabled },
       { label: "Simple", value: ShaderType.Simple },
-      { label: "Glossy", value: ShaderType.WiiUGloss },
+      { label: "Toon", value: ShaderType.WiiUToon },
       { label: "Wii U (Default)", value: ShaderType.WiiU },
       { label: "Wii U (Blinn)", value: ShaderType.WiiUBlinn },
       { label: "Wii U (Alt)", value: ShaderType.WiiUFFLIconWithBody },
