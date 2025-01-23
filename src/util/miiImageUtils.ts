@@ -263,7 +263,7 @@ export function createMiiCard(
             Config.renderer.renderHeadshotURLNoParams +
             `?data=${encodeURIComponent(
               studioData
-            )}&type=variableiconbody&verifyCharInfo=0&shaderType=switch&width=96&source=credits&characterYRotate=8&bodyType=2&` +
+            )}&type=variableiconbody&verifyCharInfo=0&shaderType=switch&width=96&source=credits&characterYRotate=8&bodyType=switch&` +
             extra,
         })
         .style({ width: "96px", height: "96px" }),

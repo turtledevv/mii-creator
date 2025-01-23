@@ -6,14 +6,15 @@ Create and share Mii characters online with just a few clicks!
 
 ## Credits
 
-- A [fork](https://github.com/datkat21/FFL-Testing-with-hats) of the [mii-unsecure.ariankordi.net](https://mii-unsecure.ariankordi.net) API by [ariankordi](https://github.com/ariankordi), used to generate 3D Mii heads and renders.
-- `mii-js` library used for interacting with Mii data in a JavaScript-friendly way
-- [Some code](https://github.com/datkat21/mii-creator/tree/master/src/external/mii-frontend) "borrowed" from arian's website.
+- Uses a locally hosted version of the [mii-unsecure.ariankordi.net](https://mii-unsecure.ariankordi.net) [API](https://github.com/ariankordi/FFL-Testing/tree/renderer-server-prototype) by [ariankordi](https://github.com/ariankordi) used to generate 3D Mii heads and icons.
+  - A [fork](https://github.com/datkat21/FFL-Testing-with-hats) is used that adds hat support.
+- [mii-js](https://github.com/PretendoNetwork/mii-js) library used for interacting with Mii data in a JavaScript-friendly way
+- [Some utility code](https://github.com/datkat21/mii-creator/tree/master/src/external/mii-frontend) "borrowed" from arian's website for conversion, QR codes, etc.
 - Custom Mii Maker music by [objecty](https://x.com/objecty)
 
 ## Features
 
-This app uses a custom version of the FFSD data type that I call the MiiCreator format (.miic), allowing for custom colors and types from the Switch, while still allowing you to convert back to 3DS/Wii U.
+This app uses a custom, extended version of the FFSD Mii format that I call the MiiCreator format (.miic), allowing for extra colors and glasses from the Switch, while still allowing you to convert back to FFSD for 3DS/Wii U.
 
 - [x] Real 3D rendering unlike Mii Studio
 - [x] Change parts and colors of the Mii
