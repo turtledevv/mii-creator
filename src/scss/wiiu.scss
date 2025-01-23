@@ -177,6 +177,48 @@
       .tab.tab-square.active {
         box-shadow: 0 0 0 0.3rem rgb(51 183 53) !important;
       }
+      .tab.tab-save {
+        background: linear-gradient(#e6e600 5%, #fffb7e 100%) !important;
+        text-shadow: 0 1px #f3ff6a !important;
+        border: none !important;
+        box-shadow: #d1d1d1 0px 2px 3px 1px inset,
+          0px 0.5px 3px 1px rgba(133, 133, 133, 0.71) !important;
+        position: relative;
+        z-index: 1 !important;
+        font-size: 18px !important;
+        transition: 0.1s !important;
+        color: #000000 !important;
+
+        span {
+          text-shadow: 0 2px 0px #ffffff55 !important;
+        }
+        svg {
+          color: #000000 !important;
+          filter: drop-shadow(0 2px 0px #ffffff55) !important;
+        }
+
+        &::before {
+          content: "";
+          width: 100%;
+          display: block;
+          top: 0;
+          left: 0;
+          position: absolute;
+          height: 40%;
+          border-radius: 20px;
+          border-bottom-left-radius: 30px;
+          border-bottom-right-radius: 30px;
+          // background: linear-gradient(rgb(243, 243, 243), rgb(243, 243, 243));
+          background: linear-gradient(
+            rgb(255, 251, 183),
+            rgb(251, 255, 114)
+          ) !important;
+          z-index: -1;
+        }
+        &::after {
+          background-color: rgba(0, 0, 0, 0.45) !important;
+        }
+      }
     }
 
     .tab-content {
