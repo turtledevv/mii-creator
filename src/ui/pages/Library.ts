@@ -41,7 +41,11 @@ import { MiiFavoriteColorIconTable } from "../../constants/ColorTables";
 import { getString as _ } from "../../l10n/manager";
 import { FFLiDatabaseRandom_Get } from "../../external/ffl/FFLiDatabaseRandom";
 import { replayUpdateNotice, Settings } from "./Settings";
-import { adjustShaderQuery, ShaderType, BodyType } from "../../constants/BodyShaderTypes";
+import {
+  adjustShaderQuery,
+  ShaderType,
+  BodyType,
+} from "../../constants/BodyShaderTypes";
 import { getSetting } from "../../util/SettingsHelper";
 import { GLTFExporter } from "three/examples/jsm/Addons.js";
 import {
@@ -2035,9 +2039,9 @@ export async function customRender(miiData: Mii) {
     scene.anim.forEach((a) => {
       a.timeScale = configuration.animSpeed / 100;
     });
-    if (bodyModelSetting === "miitomo") {
-      scene.anim.get(scene.type)!.timeScale *= 0.5;
-    }
+
+    // Fix animations being too fast
+    scene.anim.get(scene.type)!.timeScale *= 0.5;
   }
 
   //@ts-expect-error
