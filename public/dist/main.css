@@ -4,36 +4,34 @@
   background-size: cover !important;
   height: 100% !important;
 }
-@media (prefers-color-scheme: dark) {
-  :root[data-theme=wiiu] html,
-  :root[data-theme=wiiu] body {
-    background-color: transparent !important;
-    --root: #ffffff;
-    --text: #000000;
-    --label: #666666;
-    --stroke: #dddddd;
-    --stroke-rgb: 221, 221, 221;
-    --container: #eeeeee;
-    --sub-container: #ececec;
-    --hover: #dddddd;
-    --focus: #e7e7e7;
-    --icon-face-fill: #ffffff;
-    --icon-face-stroke: #6f6f6f;
-    --icon-face-detail: #8d8d8d;
-    --icon-face-makeup: #ffbaba;
-    --icon-face-wrinkles: #996d54;
-    --icon-head-fill: #ffffff;
-    --icon-head-stroke: #999999;
-    --icon-hair-fill: currentColor;
-    --icon-eyebrow-fill: currentColor;
-    --icon-facial-hair-fill: currentColor;
-    --icon-mouth-tooth: #ffffff;
-    --icon-glasses-fill: #000000;
-    --icon-glasses-shade: #606060;
-    --icon-lip-color-top: #712a04;
-    --icon-lip-color-bottom: #be4e26;
-    color: black !important;
-  }
+:root[data-theme=wiiu] html,
+:root[data-theme=wiiu] body {
+  background-color: transparent !important;
+  --root: #ffffff;
+  --text: #000000;
+  --label: #666666;
+  --stroke: #dddddd;
+  --stroke-rgb: 221, 221, 221;
+  --container: #eeeeee;
+  --sub-container: #ececec;
+  --hover: #dddddd;
+  --focus: #e7e7e7;
+  --icon-face-fill: #ffffff;
+  --icon-face-stroke: #6f6f6f;
+  --icon-face-detail: #8d8d8d;
+  --icon-face-makeup: #ffbaba;
+  --icon-face-wrinkles: #996d54;
+  --icon-head-fill: #ffffff;
+  --icon-head-stroke: #999999;
+  --icon-hair-fill: currentColor;
+  --icon-eyebrow-fill: currentColor;
+  --icon-facial-hair-fill: currentColor;
+  --icon-mouth-tooth: #ffffff;
+  --icon-glasses-fill: #000000;
+  --icon-glasses-shade: #606060;
+  --icon-lip-color-top: #712a04;
+  --icon-lip-color-bottom: #be4e26;
+  color: black !important;
 }
 :root[data-theme=wiiu] div::-webkit-scrollbar-thumb {
   border-radius: 10px !important;
