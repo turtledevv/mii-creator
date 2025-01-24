@@ -163,7 +163,8 @@ export async function Library(highlightMiiId?: string) {
         .text("You have no Miis yet. Create one to get started!")
     );
   }
-  let miiErrorCount = 0, miiCount = 0;
+  let miiErrorCount = 0,
+    miiCount = 0;
   for (const mii of miis) {
     let miiContainer = new Html("div").class("library-list-mii");
 
@@ -194,7 +195,9 @@ export async function Library(highlightMiiId?: string) {
       }
 
       let miiImage = new Html("img").class("lazy").attr({
-        "data-src": miiIconUrl(miiData, "library", "variableiconbody", 180, miiCount) + extraData,
+        "data-src":
+          miiIconUrl(miiData, "library", "variableiconbody", 180, miiCount) +
+          extraData,
       });
 
       // Special
@@ -1041,7 +1044,9 @@ const miiCreateRandomFFL = async () => {
       FFLiDatabaseRandom_Get(randomMii, options);
 
       let button = new Html("button")
-        .append(new Html("img").attr({ src: miiIconUrl(randomMii, "lookalike") }))
+        .append(
+          new Html("img").attr({ src: miiIconUrl(randomMii, "lookalike") })
+        )
         .appendTo(randomMiiContainer);
 
       const randomMiiB64 = randomMii.encode().toString("base64");
@@ -1926,9 +1931,12 @@ export async function customRender(miiData: Mii) {
 
   let playing = true;
 
+  // Don't automatically play animations on Wii U body model
+  if (bodyModelSetting === "wiiu") playing = false;
+
   let pauseButton = AddButtonSounds(
     new Html("button")
-      .text("Pause Animation")
+      .text(playing ? "Pause Animation" : "Pause Animation")
       .on("click", () => {
         if (playing === true) {
           playing = false;
@@ -2038,6 +2046,9 @@ export async function customRender(miiData: Mii) {
       }
     } else {
       scene.swapAnimation("Wait");
+      if (playing === false) {
+        scene.anim.forEach((a) => (a.paused = true));
+      }
     }
     scene.anim.forEach((a) => {
       a.timeScale = configuration.animSpeed / 100;
@@ -2052,6 +2063,19 @@ export async function customRender(miiData: Mii) {
 
   scene.init().then(async () => {
     await scene.updateMiiHead();
+
+    if (playing === false) {
+      scene.anim.forEach((anim) => {
+        if (playing === true) {
+          anim.paused = false;
+          pauseButton.text("Pause Animation");
+        } else {
+          anim.paused = true;
+          pauseButton.text("Play Animation");
+        }
+      });
+    }
+
     scene.focusCamera(CameraPosition.MiiFullBody, true, false);
     parentBox.append(scene.getRendererElement());
   });
