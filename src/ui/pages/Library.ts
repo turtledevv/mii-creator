@@ -64,9 +64,10 @@ export const newMiiId = async () =>
   `mii-${Date.now()}-${await savedMiiCount()}`;
 export const miiIconUrl = (
   mii: Mii,
-  library: boolean = true,
+  source: string = "unknown",
   view: string = "variableiconbody",
-  width: number = 180
+  width: number = 180,
+  index: number = 0
 ) => {
   let url = Config.renderer.renderHeadshotURLNoParams;
 
@@ -81,7 +82,7 @@ export const miiIconUrl = (
   params.set("verifyCharInfo", "0");
   params.set("miic", encodeURIComponent(mii.encode().toString("base64")));
   params.set("version", Config.version.string);
-  params.set("source", library ? "library" : "lookalike");
+  params.set("source", source ? "library" : "lookalike");
   params.set(
     "pantsColor",
     mii.normalMii === false ? "gold" : mii.favorite === true ? "red" : "gray"
@@ -162,7 +163,7 @@ export async function Library(highlightMiiId?: string) {
         .text("You have no Miis yet. Create one to get started!")
     );
   }
-  let miiErrorCount = 0;
+  let miiErrorCount = 0, miiCount = 0;
   for (const mii of miis) {
     let miiContainer = new Html("div").class("library-list-mii");
 
@@ -193,7 +194,7 @@ export async function Library(highlightMiiId?: string) {
       }
 
       let miiImage = new Html("img").class("lazy").attr({
-        "data-src": miiIconUrl(miiData) + extraData,
+        "data-src": miiIconUrl(miiData, "library", "variableiconbody", 180, miiCount) + extraData,
       });
 
       // Special
@@ -279,6 +280,8 @@ export async function Library(highlightMiiId?: string) {
           }
         }
       });
+
+      miiCount++;
     } catch (e: unknown) {
       console.log("Oops", e);
       miiErrorCount++;
@@ -779,7 +782,7 @@ const miiScanQR = async () => {
           .text(`${mii.miiName} has arrived!`),
         new Html("img")
           .attr({
-            src: miiIconUrl(mii, false, "all_body_sugar", 260),
+            src: miiIconUrl(mii, "qr_code", "all_body_sugar", 260),
           })
           .style({
             width: "260px",
@@ -1038,7 +1041,7 @@ const miiCreateRandomFFL = async () => {
       FFLiDatabaseRandom_Get(randomMii, options);
 
       let button = new Html("button")
-        .append(new Html("img").attr({ src: miiIconUrl(randomMii, false) }))
+        .append(new Html("img").attr({ src: miiIconUrl(randomMii, "lookalike") }))
         .appendTo(randomMiiContainer);
 
       const randomMiiB64 = randomMii.encode().toString("base64");
@@ -1220,7 +1223,7 @@ const miiEdit = (mii: MiiLocalforage, miiData: Mii) => {
     modal.qs(".modal-body")?.prepend(
       new Html("img")
         .attr({
-          src: miiIconUrl(miiData, true, "all_body_sugar", 240),
+          src: miiIconUrl(miiData, "preview", "all_body_sugar", 240),
         })
         .style({
           "object-fit": "contain",

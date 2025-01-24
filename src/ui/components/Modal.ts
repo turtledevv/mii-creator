@@ -95,7 +95,7 @@ export default {
     }
 
     function closingCallback() {
-      x.qsa("*")!.forEach((a) => a!.attr({ disabled: true, tabindex: "-1" }));
+      x.qsa("a,button,div")!.forEach((a) => a!.attr({ disabled: true, tabindex: "-1" }));
     }
 
     x.appendTo(parent);
