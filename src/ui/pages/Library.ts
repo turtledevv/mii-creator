@@ -176,6 +176,21 @@ export async function Library(highlightMiiId?: string) {
       miiData.unknown1 = 0;
       miiData.unknown2 = 0;
 
+      let specialMii = false;
+      if (
+        miiData.consoleMAC[0] === 47 &&
+        miiData.consoleMAC[1] === 249 &&
+        miiData.consoleMAC[2] === 22 &&
+        miiData.consoleMAC[3] === 28 &&
+        miiData.consoleMAC[4] === 250 &&
+        miiData.consoleMAC[5] === 173
+      ) {
+        miiContainer
+          .classOn("highlight")
+          .style({ "--selection-color": "#ffbf00" });
+        specialMii = true;
+      }
+
       // if (miiData)
       //   console.log(
       //     miiData.miiName + "'s birthPlatform:",
@@ -217,7 +232,7 @@ export async function Library(highlightMiiId?: string) {
 
       let miiName = new Html("span").text(miiData.miiName);
 
-      let miiEditCallback = miiEdit(mii, miiData);
+      let miiEditCallback = miiEdit(mii, miiData, specialMii);
 
       miiContainer.on("click", async () => {
         if (hasMiiErrored === true) {
@@ -1076,7 +1091,7 @@ const miiCreateRandomFFL = async () => {
   }
   reroll();
 };
-const miiEdit = (mii: MiiLocalforage, miiData: Mii) => {
+const miiEdit = (mii: MiiLocalforage, miiData: Mii, isSpecial: boolean) => {
   return () => {
     const modal = Modal.modal(
       miiData.miiName,
@@ -1085,15 +1100,25 @@ const miiEdit = (mii: MiiLocalforage, miiData: Mii) => {
       {
         text: "Edit",
         async callback() {
-          await shutdown();
-          new MiiEditor(
-            0,
-            async (m, shouldSave) => {
-              if (shouldSave === true) await localforage.setItem(mii.id, m);
-              Library();
-            },
-            mii.mii
-          );
+          if (isSpecial) {
+            Modal.modal(
+              "Nope",
+              "You can't edit Special Miis obtained through Mii Creator.",
+              "body",
+              { text: "Cancel" },
+              { text: "OK" }
+            );
+          } else {
+            await shutdown();
+            new MiiEditor(
+              0,
+              async (m, shouldSave) => {
+                if (shouldSave === true) await localforage.setItem(mii.id, m);
+                Library();
+              },
+              mii.mii
+            );
+          }
         },
       },
       {
@@ -1886,11 +1911,11 @@ export async function customRender(miiData: Mii) {
           // easter egg !!!!!
           const mii = new Mii(
             Buffer.from(
-              "AwEAQAAAAAAAAAAAgP9wmQAAAAAAAAAAAABkAHUAbQBtAHkAAAAAAAAAAAAAAEBAEgAeARJoYxoHA2YWIRQTZgwAAAEAUkhQTQBpAGkAQwByAGUAYQB0AG8AcgAAAI0WAAAICAAAAAAAAGQA",
+              "A0EAwAAAAAAAAAAAgP9wmS/5Fhz6rQAAAABkAHUAbQBtAHkAAAAAAAAAAAAAAEBAEgAeARJoYxoHA2YWIRQTZgwAAAEAUkhQTQBpAGkAQwByAGUAYQB0AG8AcgAAAK6gAAAICAAAAAAAAGQA",
               "base64"
             )
           );
-          importMiiConfirmation(mii, "Mii Creator Test Mii");
+          importMiiConfirmation(mii, "Mii Creator (Special Mii)");
         }),
         new Html("span").html("&nbsp;to obtain him in your library :)")
       ),
