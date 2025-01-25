@@ -312,6 +312,9 @@
   z-index: 10;
   box-shadow: 0px 0px 4px 1px rgba(0, 0, 0, 0.2);
 }
+:root[data-theme=wiiu] .mii-library .library-list .library-list-mii.highlight {
+  box-shadow: 0px 0px 4px 1px rgba(0, 0, 0, 0.2), 0 0 0 0.3rem var(--selection-color) !important;
+}
 :root[data-theme=wiiu] .mii-library .library-list .library-list-mii span {
   background: #707070 !important;
   color: #fff !important;
