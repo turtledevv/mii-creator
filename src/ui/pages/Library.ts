@@ -289,7 +289,7 @@ export async function Library(highlightMiiId?: string) {
             miiContainer.classOn("highlight");
 
             setTimeout(() => {
-              miiContainer.classOff("highlight");
+              if (specialMii === false) miiContainer.classOff("highlight");
             }, 2000);
 
             const mc = miiContainer.elm;
