@@ -1886,7 +1886,7 @@ export async function customRender(miiData: Mii) {
           // easter egg !!!!!
           const mii = new Mii(
             Buffer.from(
-              "A4EAwAAAAAAAAAAAgP9wmQAAAAAAAAAAAABkAHUAbQBtAHkAAAAAAAAAAAAAAEBAEgAeARJoYxoHA2YWIRQTZgwAAAEAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIWBAAAICAAAAAAAAGQA",
+              "AwEAQAAAAAAAAAAAgP9wmQAAAAAAAAAAAABkAHUAbQBtAHkAAAAAAAAAAAAAAEBAEgAeARJoYxoHA2YWIRQTZgwAAAEAUkhQTQBpAGkAQwByAGUAYQB0AG8AcgAAAI0WAAAICAAAAAAAAGQA",
               "base64"
             )
           );
