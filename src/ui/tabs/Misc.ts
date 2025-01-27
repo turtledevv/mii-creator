@@ -1,12 +1,9 @@
 import Html from "@datkat21/html";
 import type { TabRenderInit } from "../../constants/TabRenderType";
 import { Buffer as Buf } from "../../../node_modules/buffer/index";
-import { Button } from "../components/Button";
 import { Input } from "../components/Input";
 import Mii from "../../external/mii-js/mii";
-import Modal from "../components/Modal";
-import { AddButtonSounds } from "../../util/AddButtonSounds";
-import { getMii, RenderPart } from "../../class/MiiEditor";
+import { RenderPart } from "../../class/MiiEditor";
 
 export function MiscTab(data: TabRenderInit) {
   let tmpMii = new Mii(data.mii.encode());
