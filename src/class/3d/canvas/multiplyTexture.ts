@@ -1,7 +1,7 @@
 import { DataTexture, RGBAFormat, UnsignedByteType, type Texture } from "three";
-import type { FFLColor } from "../shader/fflShaderConst";
+import type { RGBColor } from "../shader/fflShaderConst";
 
-export function multiplyTexture(tex: Texture, color: FFLColor) {
+export function multiplyTexture(tex: Texture, color: RGBColor) {
   const canvas = document.createElement("canvas");
   canvas.width = tex.image.width;
   canvas.height = tex.image.height;

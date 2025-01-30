@@ -12,12 +12,16 @@ import {
   MiiSwitchSkinColorLinear,
   SwitchMiiColorTableLinear,
   SwitchMiiColorTableSRGB,
+  MiiFavoriteLinearColorLookupTable,
 } from "../constants/ColorTables";
 import {
   cMaterialName,
   cPantsColorGold,
+  cPantsColorGoldLinear,
   cPantsColorGray,
+  cPantsColorGrayLinear,
   cPantsColorRed,
+  cPantsColorRedLinear,
   MiiFavoriteFFLColorLookupTable,
 } from "./3d/shader/fflShaderConst";
 import { RenderPart } from "./MiiEditor";
@@ -61,6 +65,7 @@ export class Mii3DScene {
   shaderOverride: boolean;
   bodyModel!: string;
   handColor!: [number, number, number];
+  shaderType!: ShaderType;
 
   constructor(
     mii: Mii,
@@ -102,6 +107,7 @@ export class Mii3DScene {
     });
 
     getSetting("shaderType").then((type) => {
+      this.shaderType = type;
       // glTF Loader hack only for FFL shader to force srgb-linear textures.
       if (
         type === "lightDisabled" ||
@@ -495,12 +501,18 @@ export class Mii3DScene {
   }
   getPantsColor() {
     if (this.mii.normalMii === false) {
-      return cPantsColorGold;
+      return this.shaderType === ShaderType.Simple
+        ? cPantsColorGoldLinear
+        : cPantsColorGold;
     }
     if (this.mii.favorite) {
-      return cPantsColorRed;
+      return this.shaderType === ShaderType.Simple
+        ? cPantsColorRedLinear
+        : cPantsColorRed;
     }
-    return cPantsColorGray;
+    return this.shaderType === ShaderType.Simple
+      ? cPantsColorGrayLinear
+      : cPantsColorGray;
   }
   async updateBody() {
     if (!this.ready) return;
@@ -709,9 +721,9 @@ export class Mii3DScene {
 
       if (shaderSetting === "none" || this.shaderOverride) {
         (nBody.material as THREE.MeshBasicMaterial).color.set(
-          MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor][0],
-          MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor][1],
-          MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor][2]
+          MiiFavoriteLinearColorLookupTable[this.mii.favoriteColor][0],
+          MiiFavoriteLinearColorLookupTable[this.mii.favoriteColor][1],
+          MiiFavoriteLinearColorLookupTable[this.mii.favoriteColor][2]
         );
         (nLegs.material as THREE.MeshBasicMaterial).color.set(
           this.getPantsColor()[0],
@@ -914,6 +926,7 @@ export class Mii3DScene {
                 //@ts-expect-error
                 window.hatModel = hatModel;
               }
+              let shaderSetting = await getSetting("shaderType");
               hatModel.scene.traverse((o: any) => {
                 // "HatRoot" would be the name of the parent object to the hat if it is an armature
                 if (o.name === "HatScene" || o.name === "HatRoot") return;
@@ -921,9 +934,14 @@ export class Mii3DScene {
                 if ((o as THREE.Mesh).isMesh) {
                   let m = o as THREE.Mesh;
                   const mat = m.material as THREE.MeshStandardMaterial;
+
+                  let tableToPullFrom = MiiFavoriteColorVec4Table;
+                  if (shaderSetting === "none") {
+                    tableToPullFrom = MiiFavoriteLinearColorLookupTable;
+                  }
                   const tex = multiplyTexture(
                     mat.map!,
-                    MiiFavoriteColorVec4Table[
+                    tableToPullFrom[
                       this.mii.extHatColor !== 0
                         ? this.mii.extHatColor - 1
                         : this.mii.favoriteColor
