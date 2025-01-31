@@ -23,6 +23,80 @@ import {
 import Modal from "../../../components/Modal";
 import { importMiiConfirmation } from "../importDialog";
 import { traverse3DMaterialFix } from "../util/3DModel";
+import { cMaterialName } from "../../../../class/3d/shader/fflShaderConst";
+
+enum ExpressionModifier {
+  HideNose,
+  HideNoseAndMask,
+}
+
+const expressionTable: {
+  name: string;
+  id: string;
+  modifier?: ExpressionModifier;
+}[] = [
+  { name: "Normal", id: "normal" },
+  { name: "Smile", id: "smile" },
+  { name: "Anger", id: "anger" },
+  { name: "Sorrow", id: "sorrow" },
+  { name: "Surprise", id: "surprise" },
+  { name: "Blink", id: "blink" },
+  { name: "Normal (open mouth)", id: "normal_open_mouth" },
+  { name: "Smile (open mouth)", id: "smile_open_mouth" },
+  { name: "Anger (open mouth)", id: "anger_open_mouth" },
+  { name: "Surprise (open mouth)", id: "surprise_open_mouth" },
+  { name: "Sorrow (open mouth)", id: "sorrow_open_mouth" },
+  { name: "Blink (open mouth)", id: "blink_open_mouth" },
+  { name: "Wink (left eye open)", id: "wink_left" },
+  { name: "Wink (right eye open)", id: "wink_right" },
+  { name: "Wink (left eye and mouth open)", id: "wink_left_open_mouth" },
+  { name: "Wink (right eye and mouth open)", id: "wink_right_open_mouth" },
+  { name: "Wink (left eye open and smiling)", id: "like_wink_left" },
+  { name: "Wink (right eye open and smiling)", id: "like_wink_right" },
+  { name: "Frustrated", id: "frustrated" },
+  { name: "Bored", id: "19" },
+  { name: "Bored open mouth", id: "20" },
+  { name: "Sigh mouth straight", id: "21" },
+  { name: "Sigh", id: "22" },
+  { name: "Disgusted mouth straight", id: "23" },
+  { name: "Disgusted", id: "24" },
+  { name: "Love", id: "25" },
+  { name: "Love mouth open", id: "26" },
+  { name: "Determined mouth straight", id: "27" },
+  { name: "Determined", id: "28" },
+  { name: "Cry mouth straight", id: "29" },
+  { name: "Cry", id: "30" },
+  { name: "Big smile mouth straight", id: "31" },
+  { name: "Big smile", id: "32" },
+  { name: "Cheeky", id: "33" },
+  { name: "Resolve eyes funny mouth", id: "35" },
+  { name: "Resolve eyes funny mouth open", id: "36" },
+  { name: "Smug", id: "37" },
+  { name: "Smug mouth open", id: "38" },
+  { name: "Resolve", id: "39" },
+  { name: "Resolve mouth open", id: "40" },
+  { name: "Unbelievable", id: "41" },
+  { name: "Cunning", id: "43" },
+  { name: "Raspberry", id: "45" },
+  { name: "Innocent", id: "47" },
+  { name: "Cat", id: "49", modifier: ExpressionModifier.HideNose },
+  { name: "Dog", id: "51", modifier: ExpressionModifier.HideNose },
+  { name: "Tasty", id: "53" },
+  { name: "Money mouth straight", id: "55" },
+  { name: "Money", id: "56" },
+  { name: "Confused mouth straight", id: "57" },
+  { name: "Confused", id: "58" },
+  { name: "Cheerful mouth straight", id: "59" },
+  { name: "Cheerful", id: "60" },
+  { name: "Blank", id: "61", modifier: ExpressionModifier.HideNoseAndMask },
+  { name: "Grumble mouth straight", id: "63" },
+  { name: "Grumble", id: "64" },
+  { name: "Moved mouth straight", id: "65" },
+  { name: "Moved (aka pleading face)", id: "66" },
+  { name: "Singing mouth small", id: "67" },
+  { name: "Singing", id: "68" },
+  { name: "Stunned", id: "69" },
+];
 
 export async function customRender(miiData: Mii) {
   const modal = Modal.modal("Custom Render", "", "body", {
@@ -59,7 +133,7 @@ export async function customRender(miiData: Mii) {
   let configuration = {
     fov: 30,
     pose: 0,
-    expression: 0,
+    expression: "normal",
     renderWidth: 720,
     renderHeight: 720,
     cameraPosition: 1,
@@ -67,8 +141,6 @@ export async function customRender(miiData: Mii) {
   };
 
   const base64Data = miiData.encodeStudio().toString("hex");
-
-  const expressionDuplicateList = [34, 42, 44, 46, 48, 50, 52, 54, 61, 62];
 
   let poseListPerBodyModel: Record<string, number> = {
     wii: 4,
@@ -248,18 +320,16 @@ export async function customRender(miiData: Mii) {
     },
     expression: {
       label: "Expression",
-      items: ArrayNum(70)
-        .filter((n) => !expressionDuplicateList.includes(n))
-        .map((k) => ({
-          type: FeatureSetType.Icon,
-          value: k,
-          icon: `<img class="lazy" width=128 height=128 data-src="${
-            Config.renderer.renderHeadshotURLNoParams
-          }?width=128&scale=1&data=${encodeURIComponent(
-            base64Data
-          )}&expression=${k}&type=fflmakeicon&verifyCharInfo=0">`,
-          part: RenderPart.Head,
-        })),
+      items: expressionTable.map((k) => ({
+        type: FeatureSetType.Icon,
+        value: String(k.id),
+        icon: `<img class="lazy" width=128 height=128 data-src="${
+          Config.renderer.renderHeadshotURLNoParams
+        }?width=128&scale=1&data=${encodeURIComponent(base64Data)}&expression=${
+          k.id
+        }&type=fflmakeicon&verifyCharInfo=0" title="${k.name}">`,
+        part: RenderPart.Head,
+      })),
     },
     animation: {
       label: "Animation",
@@ -331,9 +401,23 @@ export async function customRender(miiData: Mii) {
     .on("click", save3DModel)
     .appendTo(tabsContent);
 
+  function resize() {
+    let { width, height } = parentBox.elm.getBoundingClientRect();
+
+    if (width < 1024) {
+      width = 1024;
+    }
+    if (height < 1024) {
+      height = 1024;
+    }
+
+    scene.resize(width, height); // min. 1024x1024px
+    scene.getRendererElement().style.height = "100%";
+    scene.getRendererElement().style.width = "unset";
+  }
+
   window.addEventListener("resize", () => {
-    const { width, height } = parentBox.elm.getBoundingClientRect();
-    scene.resize(width, height);
+    resize();
   });
 
   const scene = new Mii3DScene(
@@ -401,6 +485,56 @@ export async function customRender(miiData: Mii) {
         }&width=896&verifyCharInfo=0`
       );
     }
+
+    const expr = expressionTable.find((e) => e.id === configuration.expression);
+
+    if (expr)
+      if (typeof expr.modifier !== "undefined") {
+        switch (expr.modifier) {
+          case ExpressionModifier.HideNose:
+            // should be hiding the nose
+            scene.getHead()!.traverse((o) => {
+              if ((o as Mesh).isMesh !== true) return;
+              const m = o as Mesh;
+              const modulateType = m.geometry.userData.modulateType;
+
+              if (
+                modulateType === cMaterialName.FFL_MODULATE_TYPE_SHAPE_NOSE ||
+                modulateType === cMaterialName.FFL_MODULATE_TYPE_SHAPE_NOSELINE
+              ) {
+                m.visible = false;
+              } else {
+                m.visible = true;
+              }
+            });
+            break;
+          case ExpressionModifier.HideNoseAndMask:
+            // should be hiding the nose and the mask
+            scene.getHead()!.traverse((o) => {
+              if ((o as Mesh).isMesh !== true) return;
+              const m = o as Mesh;
+              const modulateType = m.geometry.userData.modulateType;
+
+              if (
+                modulateType === cMaterialName.FFL_MODULATE_TYPE_SHAPE_MASK ||
+                modulateType === cMaterialName.FFL_MODULATE_TYPE_SHAPE_NOSE ||
+                modulateType === cMaterialName.FFL_MODULATE_TYPE_SHAPE_NOSELINE
+              ) {
+                m.visible = false;
+              } else {
+                m.visible = true;
+              }
+            });
+            break;
+        }
+      } else {
+        console.log("change MASK NOW!!");
+        scene.getHead()!.traverse((o) => {
+          if ((o as Mesh).isMesh !== true) return;
+          const m = o as Mesh;
+          m.visible = true;
+        });
+      }
 
     const pose = "Pose." + String(configuration.pose).padStart(2, "0");
 

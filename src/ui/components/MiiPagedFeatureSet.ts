@@ -19,7 +19,7 @@ export interface FeatureSetIconItem {
   sound?: string;
   icon?: string;
   color?: string;
-  value: number;
+  value: number | string;
   property?: string;
   forceRender?: boolean;
 }
