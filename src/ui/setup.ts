@@ -8,7 +8,11 @@ import Modal from "./components/Modal";
 import { Library } from "./pages/Library";
 import Mii from "../external/mii-js/mii";
 import { MiiEditor } from "../class/MiiEditor";
-import { displayUpdateNotice, updateSettings } from "./pages/Settings";
+import {
+  displayUpdateNotice,
+  Settings,
+  updateSettings,
+} from "./pages/Settings";
 import { getMiiRender, MiiCustomRenderType } from "../util/miiImageUtils";
 import { Buffer } from "../../node_modules/buffer/index";
 import { SelectionLibrary } from "./pages/SelectionLibrary";
@@ -17,6 +21,7 @@ import { getSetting, setSetting } from "../util/SettingsHelper";
 import { Config } from "../config";
 import Html from "@datkat21/html";
 import { AddButtonSounds } from "../util/AddButtonSounds";
+import { customRender } from "./pages/library/render/customRender";
 
 export async function setupUi() {
   let mm = getMusicManager();
@@ -191,6 +196,13 @@ export async function setupUi() {
         },
         location.origin
       );
+    } else if (searchParams.has("custom-render-preview")) {
+      const miiData = new Mii(
+        Buffer.from(searchParams.get("custom-render-preview")!, "base64")
+      );
+      customRender(miiData);
+    } else if (searchParams.has("settings")) {
+      Settings();
     } else Library();
   } else Library();
 
