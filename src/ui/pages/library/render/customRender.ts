@@ -528,7 +528,6 @@ export async function customRender(miiData: Mii) {
             break;
         }
       } else {
-        console.log("change MASK NOW!!");
         scene.getHead()!.traverse((o) => {
           if ((o as Mesh).isMesh !== true) return;
           const m = o as Mesh;
@@ -587,7 +586,6 @@ export async function customRender(miiData: Mii) {
     rendererElm.toBlob((blob) => {
       const image = new Image(rendererElm.width, rendererElm.height);
       image.src = URL.createObjectURL(blob!);
-      console.log("Temporary render URL:", image.src);
       image.onload = () => {
         downloadLink(
           image.src,
