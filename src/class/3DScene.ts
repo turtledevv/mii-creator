@@ -907,7 +907,6 @@ export class Mii3DScene {
           const GLB = await this.#gltfLoader.loadAsync(
             tmpMii.studioUrl({
               ext: "glb",
-              resourceType: "very_high",
               miiName: this.mii.miiName,
               creatorName: this.mii.creatorName,
               miic: encodeURIComponent(this.mii.encode().toString("base64")),
