@@ -50,6 +50,7 @@ export const miiIconUrl = (
   params.set("miic", encodeURIComponent(mii.encode().toString("base64")));
   params.set("version", Config.version.string);
   params.set("source", source ? "library" : "lookalike");
+  params.set("index", index.toString());
   params.set(
     "pantsColor",
     mii.normalMii === false ? "gold" : mii.favorite === true ? "red" : "gray"
