@@ -1,45 +1,20 @@
 import Html from "@datkat21/html";
 import localforage from "localforage";
-import { MiiEditor, MiiGender, RenderPart } from "../../class/MiiEditor";
 import Modal, { buttonsOkCancel } from "../components/Modal";
 import Mii from "../../external/mii-js/mii";
 import { Buffer } from "../../../node_modules/buffer/index";
-import Loader from "../components/Loader";
 import { AddButtonSounds } from "../../util/AddButtonSounds";
-import {
-  createIconCard,
-  createMiiCard,
-  getMiiRender,
-  MiiCustomRenderType,
-  QRCodeCanvas,
-} from "../../util/miiImageUtils";
+import { createIconCard, createMiiCard } from "../../util/miiImageUtils";
 import { Config } from "../../config";
 import EditorIcons from "../../constants/EditorIcons";
-import { CameraPosition, Mii3DScene, SetupType } from "../../class/3DScene";
-import {
-  FeatureSetType,
-  MiiPagedFeatureSet,
-  type FeatureSetEntry,
-} from "../components/MiiPagedFeatureSet";
-import { downloadLink, saveArrayBuffer } from "../../util/downloadLink";
-import { ArrayNum, RandomInt } from "../../util/Numbers";
-import {
-  CanvasTexture,
-  Color,
-  MeshPhysicalMaterial,
-  MeshStandardMaterial,
-  Vector3,
-  type Mesh,
-  type ShaderMaterial,
-  type Texture,
-} from "three";
+import { saveArrayBuffer } from "../../util/downloadLink";
+import { RandomInt } from "../../util/Numbers";
 import {
   cPantsColorGoldHex,
   cPantsColorRedHex,
 } from "../../class/3d/shader/fflShaderConst";
 import { MiiFavoriteColorIconTable } from "../../constants/ColorTables";
 import { getString as _ } from "../../l10n/manager";
-import { FFLiDatabaseRandom_Get } from "../../external/ffl/FFLiDatabaseRandom";
 import { replayUpdateNotice, Settings } from "./Settings";
 import {
   adjustShaderQuery,
@@ -47,19 +22,7 @@ import {
   BodyType,
 } from "../../constants/BodyShaderTypes";
 import { getSetting } from "../../util/SettingsHelper";
-import { GLTFExporter } from "three/examples/jsm/Addons.js";
-import {
-  initQrCam,
-  QrScanDataType,
-  QrScannerError,
-  setQRCallback,
-  startScanner,
-} from "../../util/DecodeQRCode";
 import { playSound } from "../../class/audio/SoundManager";
-import type CameraControls from "camera-controls";
-import { sRGB } from "../../util/Color";
-import { customRender } from "./library/render/customRender";
-import { importMiiConfirmation } from "./library/importDialog";
 import { miiSelect } from "./library/select";
 import { miiCreateDialog } from "./library/new/_dialog";
 export const savedMiiCount = async () =>
