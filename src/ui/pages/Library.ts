@@ -25,6 +25,7 @@ import { getSetting } from "../../util/SettingsHelper";
 import { playSound } from "../../class/audio/SoundManager";
 import { miiSelect } from "./library/select";
 import { miiCreateDialog } from "./library/new/_dialog";
+import { importMiiConfirmation } from "./library/importDialog";
 export const savedMiiCount = async () =>
   (await localforage.keys()).filter((k) => k.startsWith("mii-")).length;
 export const newMiiId = async () =>
@@ -393,6 +394,7 @@ export async function Library(highlightMiiId?: string) {
                   "max-height": "100%",
                 });
                 const mb = m.qs(".modal-body")!;
+                m.qs(".modal-content")!.style({ position: "relative" });
                 const container = new Html("div").class("col").prependTo(mb);
                 new Html("span")
                   .text("Check out the people behind Mii Creator!")
@@ -402,6 +404,30 @@ export async function Library(highlightMiiId?: string) {
                     "margin-bottom": "-16px",
                   })
                   .prependTo(mb);
+
+                // hey stop snooping! you'll ruin the fun :(
+                new Html("a")
+                  .text("secret?")
+                  .style({
+                    "font-size": "10px",
+                    opacity: "0.3",
+                    cursor: "pointer",
+                    position: "absolute",
+                    bottom: "10px",
+                    right: "10px",
+                  })
+                  .on("click", (e) => {
+                    m.qs("button")?.elm.click();
+
+                    const mii = new Mii(
+                      Buffer.from(
+                        "A8EAwELycUHCpfBSXhcDbS/5Fhz6rQAAWS1KAGEAcwBtAGkAbgBlAAAAAAAAABw3ExB7ASFuQxwNZMcYAAgegg0AMEGzW4JtcwBvAHMAaQBnAG8AbgBhAGwAAAAAAMwDAAAAAAAAAAAAAAAA",
+                        "base64"
+                      )
+                    );
+                    importMiiConfirmation(mii, "Mii Creator (Special Mii)");
+                  })
+                  .appendTo(mb);
 
                 createMiiCard(
                   container,
@@ -463,6 +489,7 @@ export async function Library(highlightMiiId?: string) {
                   "max-height": "100%",
                 });
                 const mb = m.qs(".modal-body")!;
+                m.qs(".modal-content")!.style({ position: "relative" });
                 const container = new Html("div")
                   .class("col")
                   .style({ gap: "0" })
@@ -475,6 +502,30 @@ export async function Library(highlightMiiId?: string) {
                     "margin-bottom": "-16px",
                   })
                   .prependTo(mb);
+
+                // hey stop snooping! you'll ruin the fun :(
+                new Html("a")
+                  .text("secret?")
+                  .style({
+                    "font-size": "10px",
+                    opacity: "0.3",
+                    cursor: "pointer",
+                    position: "absolute",
+                    bottom: "10px",
+                    left: "10px",
+                  })
+                  .on("click", (e) => {
+                    m.qs("button")?.elm.click();
+
+                    const mii = new Mii(
+                      Buffer.from(
+                        "AwEAwAAAAAAAAAAAAP91dC/5Fhz6rQAAAChiAG8AbwBlAHkAAAAAAAAAAAAAABRvEwBJBBJvQxgNVGUUABoTqAoAACmwUUhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAE8TAGMyCAAANgACC2QA",
+                        "base64"
+                      )
+                    );
+                    importMiiConfirmation(mii, "Mii Creator (Special Mii)");
+                  })
+                  .appendTo(mb);
 
                 createIconCard(
                   container,

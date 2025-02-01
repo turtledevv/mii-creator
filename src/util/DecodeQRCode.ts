@@ -446,6 +446,10 @@ function handleQrCode(result: { bytes: any }) {
         );
 
         if (decryptedExtraData.length === 240) {
+          qrCallback(
+            Buffer.concat([decryptedStoreDataBuf]),
+            QrScanDataType.ExtraDataTL
+          );
           // QrScannerError(
           //   "Tomodachi Life codes won't retain hair dye info yet."
           // );

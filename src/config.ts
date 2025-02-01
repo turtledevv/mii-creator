@@ -4,7 +4,7 @@
 // const baseURL = "http://localhost:5000/miis/image"; // <-- Uncomment this when using local FFL-testing for development
 const baseURL = "https://mii-renderer.nxw.pw/miis/image"; // <-- Comment this when committing for prod
 // ^^ image.png, image.glb
-const newApiParams = false;
+const newApiParams = true;
 // false if using FFL-Testing-with-hats
 // true if using new FFL-Testing version with headwear
 
@@ -41,12 +41,12 @@ export const Config = {
     // ^^ scaleLimit, scaleLimitClampY, scaleApply
   },
   version: {
-    string: "v0.9.1",
+    string: "v0.9.2",
     name: "Patch Update",
 
     // ignore that I'm just writing HTML here
     changelog: `
-    <h1 style="font-size: 20px;text-align: center;">v0.9.0 - QR Code and MiiC v3 Support</h1>
+    <h1 style="font-size: 20px;text-align: center;">v0.9.2 - QR Code and MiiC v3 Support</h1>
 
     <div class="flex-group">
       <img draggable="false" width=96 height=96 src="https://i.imgur.com/sMtNF5a.png">
@@ -57,18 +57,29 @@ export const Config = {
     </div>
 
     <div style="text-align:center;margin:12px 0">
-      <p style="margin-bottom:0"><strong style="color:var(--error-color)">Please <a href="mailto:datkat21.yt@gmail.com">contact me</a> <small>(kat21)</small> if you have any feedback, feature requests, or bug reports.</strong></p>
+      <p style="margin-bottom:0"><strong style="color:var(--error-color)">Please <a target="_blank" href="mailto:datkat21.yt@gmail.com">contact me</a> <small>(kat21)</small> if you have any feedback, feature requests, or bug reports.</strong></p>
       <small>(Some people are just not aware that kat21 made this app, not ariankordi. if you are one of those people you should know by now. Also this project is named "Mii Creator", not "Mii Creator Web," or any other "mii maker" thing. 🙂)</small>
     </div>
 
-    <h3>NEW: v0.9.1 - Patch Update</h3>
+    <h3>NEW: v0.9.2 - Small Patch Update</h3>
+    <ul style="display:flex;flex-direction:column;gap:8px;line-height:1.75rem">
+      <li style="color:var(--selection-color)">A LOT of new faces have shown up over the past few days, if you come from X/Twitter or Tumblr, say hi!</li>
+      <li>Some hat models have been improved! Beanie, cap and cat ears were properly fixed.</li>
+      <li>2D renders now show hat textures!</li>
+      <li>Some broken expressions (blank face, cat face, dog face) work now</li>
+      <li>Bug fix Tomodachi Life QR codes not displaying the error message (they still do not work do not ask me about this)</li>
+      <li>Bug fix hats clipping the mask</li>
+      <li style="color:var(--gold-color)">More secret Special Miis added!</li>
+    </ul>
+
+    <h3>v0.9.1 - Patch Update</h3>
 
     <ul style="display:flex;flex-direction:column;gap:8px;line-height:1.75rem">
       <li>Bug fix the contact menu not closing</li>
       <li>Wii U theme small design tweaks to fix some stuff broken by the new UI</li>
       <li>Rename "Glossy" shader to "Toon"</li>
       <li>Fix a bug where the Wii U animations were sped up.</li>
-      <li style="color:var(--error-color)">Secret Special Miis can be obtained through random menus (there is only 1 for now)</li>
+      <li style="color:var(--gold-color)">Secret Special Miis can be obtained through random menus (there is only 1 for now)</li>
     </ul>
 
     <h3>The new changes</h3>
