@@ -907,7 +907,7 @@ export class Mii3DScene {
           const GLB = await this.#gltfLoader.loadAsync(
             tmpMii.studioUrl({
               ext: "glb",
-              resourceType: "very_high",
+              texResolution: "512",
               miiName: this.mii.miiName,
               creatorName: this.mii.creatorName,
               miic: encodeURIComponent(this.mii.encode().toString("base64")),
@@ -930,6 +930,7 @@ export class Mii3DScene {
               );
 
               hatModel.scene.name = "HatScene";
+              hatModel.scene.renderOrder = -1;
               let i = 0;
               if (GLB.asset.extras.partsTransform.hatTranslate) {
                 const [x, y, z] = GLB.asset.extras.partsTransform.hatTranslate;

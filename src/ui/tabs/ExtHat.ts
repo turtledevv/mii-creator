@@ -17,7 +17,7 @@ export function ExtHatTab(data: TabRenderInit) {
         extHatType: {
           label: "Hat",
           header:
-            "Hat type is a CUSTOM property, and will not transfer to any other data formats.\n\nKeep in mind that hat textures do not show up in 2D mode and 2D render previews as the server does not support it yet!",
+            "Hat type is a CUSTOM property, and will not transfer to any other data formats.",
           items: [
             {
               type: FeatureSetType.Icon,
@@ -40,7 +40,7 @@ export function ExtHatTab(data: TabRenderInit) {
         extHatColor: {
           label: "Hat Color",
           header:
-            "Hat color is a CUSTOM property, and will not transfer to any other data formats.\n\nKeep in mind that hat textures do not show up in 2D mode and 2D render previews as the server does not support it yet!",
+            "Hat color is a CUSTOM property, and will not transfer to any other data formats.",
           items: [
             {
               type: FeatureSetType.Icon,

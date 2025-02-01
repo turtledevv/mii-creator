@@ -103,10 +103,16 @@ export const newFromQRCode = async () => {
         case QrScanDataType.GenericWiiU3ds:
           mii = new Mii(data);
           qrImportConfirmation(mii, "3DS/Wii U QR Code");
+          mii = new Mii(data);
+          qrImportConfirmation(mii, "3DS/Wii U QR Code");
           break;
         case QrScanDataType.ExtraDataTL:
-          // no working handling yet
-          QrScannerError("This data format is not yet supported.");
+          Modal.alert(
+            "Notice",
+            new Html("span").html(
+              'Tomodachi Life QR codes aren\'t supported yet. Use <a href="https://mii-unsecure.ariankordi.net" target="_blank">Mii Renderer (REAL)</a> to scan it.'
+            )
+          );
           break;
         case QrScanDataType.ExtraDataMiiC:
           mii = new Mii(data);

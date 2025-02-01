@@ -346,6 +346,7 @@ body {
   --selection-color: rgb(0, 145, 255);
   --primary-color: rgb(87, 199, 255);
   --error-color: rgb(255, 96, 87);
+  --gold-color: rgb(255, 191, 0);
   font-size: 16px;
   position: fixed;
   top: 0;
@@ -396,6 +397,7 @@ body[data-theme=default] > body {
     --selection-color: rgb(0, 145, 255);
     --primary-color: rgb(23, 96, 118);
     --error-color: rgb(255, 96, 87);
+    --gold-color: rgb(255, 191, 0);
     --root: #000000ee;
     --text: #ffffff;
     --label: #cccccc;
