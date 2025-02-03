@@ -4,16 +4,19 @@ import { setupUi } from "./ui/setup";
 import { MiiEditor } from "./class/MiiEditor";
 import LazyLoad, { type ILazyLoadInstance } from "vanilla-lazyload";
 import { langManager } from "./l10n/manager";
+import * as Sentry from "@sentry/browser";
+import { Config } from "./config";
 
 declare global {
   interface Window {
-    mii: Mii;
-    Mii: any;
-    editor: MiiEditor;
     buffer: Buf;
-    localforage: LocalForage;
-    LazyLoad: ILazyLoadInstance;
+    editor: MiiEditor;
     firstVisit: boolean;
+    LazyLoad: ILazyLoadInstance;
+    localforage: LocalForage;
+    Mii: any;
+    mii: Mii;
+    sentryOnLoad: any;
   }
 }
 
@@ -21,6 +24,11 @@ declare global {
 window.buffer = Buf;
 
 window.LazyLoad = new LazyLoad();
+
+Sentry.init({
+  dsn: Config.dataFetch.sentryURL,
+  tracesSampleRate: 0.01,
+});
 
 langManager.getString("languages.en_US");
 setupUi();

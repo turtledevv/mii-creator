@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@datkat21/html": "^1.2.0",
+    "@sentry/browser": "^8.53.0",
     "@types/assert": "^1.5.10",
     "@types/gsap": "^3.0.0",
     "@types/md5": "^2.3.5",
