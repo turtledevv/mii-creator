@@ -71,8 +71,22 @@ export async function traverse3DMaterialFix(
           canvas.width = map.image.width;
           canvas.height = map.image.height;
 
+          let image = map.image,
+            isImageData = false;
+
+          if (typeof map.image.data !== "undefined") {
+            // assume multiplyTexture was used, so it's ImageData
+            image = new ImageData(
+              map.image.data,
+              map.image.width,
+              map.image.height
+            );
+            isImageData = true;
+          }
+
           // Draw the texture to the canvas
-          context.drawImage(map.image, 0, 0);
+          if (isImageData) context.putImageData(image, 0, 0);
+          else context.drawImage(image, 0, 0);
 
           // Get image data from the canvas
           const imageData = context.getImageData(
