@@ -10,11 +10,14 @@ import {
 import type { Mii3DScene } from "../../../../class/3DScene";
 import { getSetting } from "../../../../util/SettingsHelper";
 import { sRGB } from "../../../../util/Color";
+import { cMaterialName } from "../../../../class/3d/shader/fflShaderConst";
+import * as THREE from "three";
 
 export async function traverse3DMaterialFix(
   scene: Mii3DScene
 ): Promise<Map<number, any>> {
   const shaderSetting = await getSetting("shaderType");
+  const bodyModelHands = await getSetting("bodyModelHands");
   return new Promise((resolve) => {
     let mats = new Map<number, any>();
     let count = 0;
@@ -52,14 +55,6 @@ export async function traverse3DMaterialFix(
 
         map = (m.material as ShaderMaterial).uniforms.s_texture.value;
 
-        // TODO: fix hands not getting colored in model export?
-        // oh actually it might just be modulateColor that has to be set
-        // if (bodyModelHands) {
-        //   if (m.name === "hands_m" || m.name === "hands_f") {
-        //     (m.material as ShaderMaterial).uniforms.u_const1.value =
-        //       new Vector4(...scene.handColor, 1);
-        //   }
-        // }
         if (map !== null) {
           // Wii U shader textures need to be converted from linear to sRGB
 
@@ -176,15 +171,56 @@ export async function traverse3DMaterialFix(
         return Number(`0x${hexR}${hexG}${hexB}`);
       }
 
-      m.material = new MeshPhysicalMaterial({
-        color: rgbaToHex(userData.modulateColor),
-        metalness: 1,
-        roughness: 1,
+      // define params for the model material export
+      let color: THREE.ColorRepresentation | undefined = rgbaToHex(
+          userData.modulateColor
+        ),
+        metalness: number = 1,
+        roughness: number = 1;
 
-        // For texture
-        alphaTest: 0.5,
+      if (m.parent) {
+        if (m.parent.name.includes("Hat")) {
+          // assume HatScene or HatRoot, we don't need a blend color
+          color = undefined;
+        }
+      }
+
+      if (bodyModelHands) {
+        if (m.name === "hands_m" || m.name === "hands_f") {
+          color = new THREE.Color(...scene.handColor);
+        }
+      }
+
+      var mat = new MeshPhysicalMaterial({
+        color,
+        metalness,
+        roughness,
         map: map,
+        side: THREE.FrontSide,
       });
+
+      switch (userData.modulateType) {
+        case cMaterialName.FFL_MODULATE_TYPE_SHAPE_MASK:
+        case cMaterialName.FFL_MODULATE_TYPE_SHAPE_NOSELINE:
+          mat.side = THREE.FrontSide;
+          mat.transparent = true;
+          break;
+        case cMaterialName.FFL_MODULATE_TYPE_SHAPE_GLASS:
+          mat.side = THREE.DoubleSide;
+          mat.transparent = true;
+          break;
+        case cMaterialName.FFL_MODULATE_TYPE_SHAPE_PANTS:
+          // get pants color from the scene
+          const pantsColor = scene.getPantsColor();
+          mat.color = new THREE.Color(
+            pantsColor[0],
+            pantsColor[1],
+            pantsColor[2]
+          );
+          break;
+      }
+
+      m.material = mat;
 
       count++;
 
