@@ -19,6 +19,7 @@ export const Config = {
     renderHeadshotURL: `${baseURL}.png?shaderType=wiiu&type=face&width=260&verifyCharInfo=0`,
     renderHeadshotURLNoParams: `${baseURL}.png`,
     renderFullBodyURL: `${baseURL}.png?shaderType=wiiu&type=all_body_sugar&width=420&verifyCharInfo=0&scale=1`,
+    renderFullBodyAltURL: `${baseURL}.png?shaderType=wiiu&type=all_body_sugar&width=960&verifyCharInfo=0&scale=1`,
     render3DHeadURL: `${baseURL}.glb?shaderType=wiiu&type=face&width=260&verifyCharInfo=0`,
     renderFaceURL: `${baseURL}.png?scale=1&drawStageMode=mask_only&verifyCharInfo=0`,
 

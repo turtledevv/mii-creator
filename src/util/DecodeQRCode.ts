@@ -288,11 +288,6 @@ export async function startScanner(camList: HTMLElement) {
       onDecodeError: (error: string | null) => {
         if (error === "No QR code found") return;
         console.log("QR scan error:", error);
-        // const li = document.createElement("li");
-        // li.textContent = error;
-        // li.style.color = "red";
-        // co
-        // resultList.insertBefore(li, resultList.firstChild);
       },
       highlightScanRegion: true,
       highlightCodeOutline: true,
@@ -415,8 +410,12 @@ export function setQRCallback(fn: (data: Buffer, type: QrScanDataType) => any) {
   qrCallback = fn;
 }
 
-function handleQrCode(result: { bytes: any }) {
+function handleQrCode(result: { bytes: any; noQrCode: any }) {
   if (!result || !result.bytes) return;
+
+  if (result.noQrCode) {
+    return;
+  }
 
   cameraScanner.stop();
 

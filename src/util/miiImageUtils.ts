@@ -189,15 +189,33 @@ export const getBackground = async (
   });
 };
 
+export function loadImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = url;
+    img.onload = () => {
+      resolve(img);
+    };
+    img.onerror = (e) => {
+      reject(e);
+    };
+  });
+}
+
 export const QRCodeCanvas = async (
   mii: string,
   extendedColors: boolean = true
 ) => {
   const miiData = new Mii(Buf.from(mii, "base64"));
-  const render = await getMiiRender(
-    miiData,
-    MiiCustomRenderType.Body,
-    extendedColors
+  const render = await loadImage(
+    `${Config.renderer.renderFullBodyAltURL}&data=${encodeURIComponent(
+      miiData.encodeStudio().toString("hex")
+    )}&${Config.renderer.hatTypeParam}=${
+      miiData.extHatType + Config.renderer.hatTypeAdd
+    }&${Config.renderer.hatColorParam}=${
+      miiData.extHatColor + Config.renderer.hatColorAdd
+    }`
   );
   const qrCodeSource = await makeQrCodeImage(mii);
   const background = await getBackground(extendedColors);
@@ -210,12 +228,18 @@ export const QRCodeCanvas = async (
   // background
   ctx.drawImage(background, 0, 0);
   // mark
-  ctx.font = "500 24px sans-serif";
+  ctx.font = '500 24px "NTLG", sans-serif';
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
   ctx.fillStyle = "#cccccc";
   ctx.fillText(`${location.origin}`, 32, 667);
-  ctx.drawImage(render, 49, 0, 720, 720);
+  // version mark
+  ctx.font = '500 24px "NTLG", sans-serif';
+  ctx.textAlign = "right";
+  ctx.textBaseline = "top";
+  ctx.fillStyle = "#cccccc";
+  ctx.fillText(`Made with Mii Creator ${Config.version.string}`, 1248, 667);
+  ctx.drawImage(render, 54, -54, 714, 953);
   // qr code container
   ctx.fillStyle = "#ffffff";
   ctx.beginPath();
@@ -231,7 +255,7 @@ export const QRCodeCanvas = async (
   ctx.fillStyle = "#ffffff";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.font = "500 38px sans-serif";
+  ctx.font = '500 38px "NTLG", sans-serif';
   ctx.fillText(miiData.miiName, 1005, 591);
   const canvasPngImage = canvas.toDataURL("png", 100);
   return canvasPngImage;
