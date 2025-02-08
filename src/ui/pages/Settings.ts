@@ -214,7 +214,7 @@ export const settingsInfo: Record<string, any> = {
     label: "Color hands to skin tone",
     default: false,
     description:
-      "The hands of the body will match the Mii's skin tone.\n* This currently doesn't apply to 3D model exports due to a bug.",
+      "The hands of the body will match the Mii's skin tone.\n* Does not apply to 2D mode.",
   },
   customRenderGreenScreen: {
     type: "multi",
