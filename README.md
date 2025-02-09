@@ -39,6 +39,7 @@ Some of the custom hat models are provided by the Models Resource:
 Thanks to [Timimimi](https://github.com/Timiimiimii) for creating the new hat models:
 
 - Cat Ears
+- Straw Hat
 - Hijab
 - Bike Helmet
 
