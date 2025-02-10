@@ -25,7 +25,7 @@ export async function compile(
   })) as BuildOutput;
   if (output.logs) {
     for (const log of output.logs) {
-      console.error(log.message);
+      console.error(log);
     }
   }
 }
