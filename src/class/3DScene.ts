@@ -1,6 +1,9 @@
 import * as THREE from "three";
 // make sure types work with the patched GLTF loader
-import { GLTFLoader as TrueGLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import {
+  GLTFLoader as TrueGLTFLoader,
+  type GLTF,
+} from "three/addons/loaders/GLTFLoader.js";
 // very hacky but it works to fix the shader bug...
 import { GLTFLoader } from "./3d/Custom_GLTFLoader";
 import CameraControls from "camera-controls";
@@ -33,6 +36,7 @@ import localforage from "localforage";
 import { traverseAddShader, traverseMesh } from "./3d/shader/ShaderUtils";
 import { getSetting } from "../util/SettingsHelper";
 import { ShaderType } from "../constants/BodyShaderTypes";
+import { getHeadModel } from "../util/MiiRendering";
 
 export enum CameraPosition {
   MiiHead,
@@ -904,16 +908,21 @@ export class Mii3DScene {
             }
           }
           params["verifyCharInfo"] = "0";
-          const GLB = await this.#gltfLoader.loadAsync(
-            tmpMii.studioUrl({
-              ext: "glb",
-              texResolution: "512",
-              miiName: this.mii.miiName,
-              creatorName: this.mii.creatorName,
-              miic: encodeURIComponent(this.mii.encode().toString("base64")),
-              ...params,
-            } as unknown as any)
-          );
+          let GLB: GLTF;
+          if (Config.renderer.useRendererServer) {
+            GLB = await this.#gltfLoader.loadAsync(
+              tmpMii.studioUrl({
+                ext: "glb",
+                texResolution: "512",
+                miiName: this.mii.miiName,
+                creatorName: this.mii.creatorName,
+                miic: encodeURIComponent(this.mii.encode().toString("base64")),
+                ...params,
+              } as unknown as any)
+            );
+          } else {
+            GLB = await getHeadModel(tmpMii);
+          }
           //@ts-expect-error
           window.GLB = GLB;
           this.mii.favoriteColor = favoriteColor;
