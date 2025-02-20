@@ -482,7 +482,7 @@ export async function customRender(miiData: Mii) {
         scene.getHead() as Mesh,
         `&data=${encodeURIComponent(base64Data)}&expression=${
           configuration.expression
-        }&width=4096&verifyCharInfo=0&resourceType=very_high`
+        }&width=896&verifyCharInfo=0`
       );
     }
 
