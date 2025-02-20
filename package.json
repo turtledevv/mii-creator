@@ -18,7 +18,7 @@
     "@types/assert": "^1.5.10",
     "@types/gsap": "^3.0.0",
     "@types/md5": "^2.3.5",
-    "@types/three": "^0.169.0",
+    "@types/three": "^0.173.0",
     "assert": "^2.1.0",
     "buffer": "^6.0.3",
     "camera-controls": "^2.9.0",
@@ -28,7 +28,7 @@
     "localforage": "^1.10.0",
     "md5": "^2.3.0",
     "sass": "^1.79.4",
-    "three": "^0.169.0",
+    "three": "^0.173.0",
     "vanilla-lazyload": "^19.1.3"
   }
 }

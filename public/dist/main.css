@@ -625,7 +625,6 @@ h6 {
   border: 2px solid var(--stroke);
   border-radius: 8px;
   min-width: 200px;
-  min-height: 140px;
   max-height: 440px;
   overflow: clip;
   animation: shortSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);

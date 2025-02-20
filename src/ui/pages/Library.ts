@@ -26,17 +26,83 @@ import { playSound } from "../../class/audio/SoundManager";
 import { miiSelect } from "./library/select";
 import { miiCreateDialog } from "./library/new/_dialog";
 import { importMiiConfirmation } from "./library/importDialog";
+import {
+  createCharModel,
+  createCharModelIcon,
+  initCharModelTextures,
+  parseHexOrB64ToUint8Array,
+  ViewType,
+} from "../../external/ffl.js/ffl";
+import { getFFL } from "../../main";
+import { WebGLRenderer } from "three";
 export const savedMiiCount = async () =>
   (await localforage.keys()).filter((k) => k.startsWith("mii-")).length;
 export const newMiiId = async () =>
   `mii-${Date.now()}-${await savedMiiCount()}`;
-export const miiIconUrl = (
+export const playLoadSound = () => {
+  setTimeout(() => {
+    // only play 50% of the time lol
+    if (RandomInt(2) !== 0) return;
+    playSound(`load${RandomInt(4) + 1}`);
+  }, RandomInt(200));
+};
+
+let tmpRenderer: WebGLRenderer;
+export const getTempRenderer = () => tmpRenderer;
+
+var canvas = document.createElement("canvas");
+document.body.appendChild(canvas);
+tmpRenderer = new WebGLRenderer({ alpha: true, preserveDrawingBuffer: true });
+
+export const miiIconUrl = async (
   mii: Mii,
   source: string = "unknown",
   view: string = "variableiconbody",
   width: number = 180,
   index: number = 0
 ) => {
+  if (Config.renderer.useRendererServer === false) {
+    // Momentarily create CharModel
+    let dataURL = "undefined",
+      model: any;
+    try {
+      const dataU8 = mii.encodeStudio();
+      model = createCharModel(
+        dataU8,
+        undefined,
+        window.LUTShaderMaterial,
+        getFFL(),
+        false
+      );
+      initCharModelTextures(model, tmpRenderer);
+      let realView = ViewType.MakeIcon;
+      switch (view) {
+        case "face":
+        case "variableiconbody":
+          realView = ViewType.MakeIcon;
+          break;
+        case "all_body_sugar":
+          realView = ViewType.MakeIcon;
+          break;
+      }
+      dataURL = await createCharModelIcon(
+        model,
+        tmpRenderer,
+        realView,
+        512,
+        512
+      );
+      // console.log(`charModel for ${mii.miiName}:`, model);
+    } catch (e) {
+      console.error(
+        `loadCharacterButtons: Could not make icon for ${mii.miiName}: ${e}`
+      );
+    } finally {
+      model.dispose();
+      return dataURL;
+    }
+  }
+
   let url = Config.renderer.renderHeadshotURLNoParams;
 
   let params = new URLSearchParams();
@@ -187,11 +253,21 @@ export async function Library(highlightMiiId?: string) {
         )}`;
       }
 
-      let miiImage = new Html("img").class("lazy").attr({
-        "data-src":
-          miiIconUrl(miiData, "library", "variableiconbody", 180, miiCount) +
-          extraData,
-      });
+      let miiImage = new Html("img").class("lazy").attr({});
+
+      // "data-src":
+      // (await miiIconUrl(
+      //   miiData,
+      //   "library",
+      //   "variableiconbody",
+      //   180,
+      //   miiCount
+      // )) + extraData,
+      miiIconUrl(miiData, "library", "variableiconbody", 180, miiCount).then(
+        (r) => {
+          miiImage.attr({ "data-src": r });
+        }
+      );
 
       // Special
       if (
@@ -252,11 +328,7 @@ export async function Library(highlightMiiId?: string) {
         hasMiiErrored = true;
       });
       miiImage.on("load", () => {
-        setTimeout(() => {
-          // only play 50% of the time lol
-          if (RandomInt(2) !== 0) return;
-          playSound(`load${RandomInt(4) + 1}`);
-        }, RandomInt(200));
+        playLoadSound();
       });
 
       miiContainer.appendMany(miiImage, miiName).appendTo(libraryList);

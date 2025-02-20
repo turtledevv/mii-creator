@@ -1,7 +1,7 @@
 // Configuration file used client-side.
 
 // Settings relating to local rendering.
-const useRendererServer = true; // Allow use of the renderer server (legacy rendering)
+const useRendererServer = false; // Allow use of the renderer server (legacy rendering)
 const fflResourcePath = "FFLResHigh.dat"; // Configure the path for where the resource file is located.
 
 // Instance of FFL-Testing/Mii Studio API compatible renderer.

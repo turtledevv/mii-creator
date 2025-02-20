@@ -5,7 +5,7 @@ import { MiiEditor } from "../../../../class/MiiEditor";
 import { FFLiDatabaseRandom_Get } from "../../../../external/ffl/FFLiDatabaseRandom";
 import Mii from "../../../../external/mii-js/mii";
 import Modal from "../../../components/Modal";
-import { _shutdown, Library, miiIconUrl, newMiiId } from "../../Library";
+import { _shutdown, Library, miiIconUrl, newMiiId, playLoadSound } from "../../Library";
 import { miiCreateDialog } from "./_dialog";
 
 export const newFromLookalike = async () => {
@@ -144,10 +144,13 @@ export const newFromLookalike = async () => {
       FFLiDatabaseRandom_Get(randomMii, options);
 
       let button = new Html("button")
-        .append(
-          new Html("img").attr({ src: miiIconUrl(randomMii, "lookalike") })
-        )
+        .append(new Html("img").attr({ src: "" }))
         .appendTo(randomMiiContainer);
+
+      miiIconUrl(randomMii, "lookalike").then((icon) => {
+        playLoadSound();
+        button.qs("img")?.attr({ src: icon });
+      });
 
       const randomMiiB64 = randomMii.encode().toString("base64");
 

@@ -17,7 +17,7 @@ export const miiSelect = (
   miiData: Mii,
   isSpecial: boolean
 ) => {
-  return () => {
+  return async () => {
     const modal = Modal.modal(
       miiData.miiName,
       "What would you like to do?",
@@ -57,13 +57,13 @@ export const miiSelect = (
             reliefIconURL: string;
 
           scaredIcon = await (
-            await fetch(miiIconUrl(miiData) + "&expression=10")
+            await fetch(await miiIconUrl(miiData) + "&expression=10")
           ).blob();
           fearfulIcon = await (
-            await fetch(miiIconUrl(miiData) + "&expression=30")
+            await fetch(await miiIconUrl(miiData) + "&expression=30")
           ).blob();
           reliefIcon = await (
-            await fetch(miiIconUrl(miiData) + "&expression=1")
+            await fetch(await miiIconUrl(miiData) + "&expression=1")
           ).blob();
 
           scaredIconURL = URL.createObjectURL(scaredIcon);
@@ -178,7 +178,7 @@ export const miiSelect = (
     modal.qs(".modal-body")?.prepend(
       new Html("img")
         .attr({
-          src: miiIconUrl(miiData, "preview", "all_body_sugar", 240),
+          src: await miiIconUrl(miiData, "preview", "all_body_sugar", 240),
         })
         .style({
           "object-fit": "contain",

@@ -2,7 +2,6 @@ import localforage from "localforage";
 import { getMusicManager } from "../class/audio/MusicManager";
 import {
   getSoundManager,
-  setupSoundManager,
 } from "../class/audio/SoundManager";
 import Modal from "./components/Modal";
 import { Library } from "./pages/Library";
@@ -25,6 +24,7 @@ import { customRender } from "./pages/library/render/customRender";
 
 export async function setupUi() {
   let mm = getMusicManager();
+  getSoundManager();
 
   updateSettings(true);
 
@@ -71,7 +71,7 @@ export async function setupUi() {
   }
 
   mm.initMusic();
-  setupSoundManager();
+
 
   if (location.search !== "") {
     const searchParams = new URLSearchParams(location.search);

@@ -36,7 +36,9 @@ import localforage from "localforage";
 import { traverseAddShader, traverseMesh } from "./3d/shader/ShaderUtils";
 import { getSetting } from "../util/SettingsHelper";
 import { ShaderType } from "../constants/BodyShaderTypes";
-import { getHeadModel } from "../util/MiiRendering";
+import { getHeadModel, getMaskTex, type ModelFlag } from "../util/MiiRendering";
+import type { CharModel } from "../external/ffl.js/ffl";
+import { LUTShaderMaterial } from "../external/ffl.js/LUTShaderMaterial";
 
 export enum CameraPosition {
   MiiHead,
@@ -55,6 +57,8 @@ export class Mii3DScene {
   #scene: THREE.Scene;
   #renderer: THREE.WebGLRenderer;
   #parent: HTMLElement;
+  #pastCharModel!: CharModel;
+  #pastCharMask!: CharModel;
   mii: Mii;
   ready: boolean;
   headReady: boolean;
@@ -921,7 +925,23 @@ export class Mii3DScene {
               } as unknown as any)
             );
           } else {
-            GLB = await getHeadModel(tmpMii);
+            if (this.#pastCharModel) {
+              // console.log("Past Char Model:", this.#pastCharModel);
+              if (this.#pastCharModel.dispose) this.#pastCharModel.dispose();
+            }
+
+            let modelType: ModelFlag = "NORMAL";
+
+            switch (params.modelType) {
+              case "hat":
+                modelType = "HAT";
+                break;
+              case "face_only":
+                modelType = "FACE_ONLY";
+                break;
+            }
+
+            GLB = await getHeadModel(tmpMii, this, modelType);
           }
           //@ts-expect-error
           window.GLB = GLB;
@@ -1000,6 +1020,19 @@ export class Mii3DScene {
                   };
 
                   i++;
+
+                  if (Config.renderer.useRendererServer === false) {
+                    // apply shader material!
+                    var mc = m.geometry.userData["modulateColor"];
+                    m.material = new LUTShaderMaterial({
+                      modulateMode: 0,
+                      modulateType: 5,
+                      cullMode: 0,
+                      // ?????? TOOD FIX COLORS PLZZLPLP ZLPLPZ PL
+                      modulateColor: [mc[0], mc[1], mc[2], 1],
+                      map: tex,
+                    });
+                  }
                 }
               });
 
@@ -1018,7 +1051,13 @@ export class Mii3DScene {
           this.#scene.getObjectsByProperty("name", "MiiHead").forEach((obj) => {
             obj.parent!.remove(obj);
           });
-          traverseAddShader(GLB.scene, this.mii);
+
+          if (Config.renderer.useRendererServer)
+            traverseAddShader(GLB.scene, this.mii);
+          else {
+            this.#pastCharModel = (GLB as any).CharModel;
+          }
+
           console.debug("Traversing shader now");
 
           const body = this.#scene.getObjectByName(this.type)!;
@@ -1139,9 +1178,17 @@ export class Mii3DScene {
                 const mat = child.material as THREE.MeshBasicMaterial;
                 const oldMat = mat;
 
-                const tex = await this.#textureLoader.loadAsync(
-                  Config.renderer.renderFaceURL + urlParams
-                );
+                var loadUrl = Config.renderer.renderFaceURL + urlParams;
+
+                if (Config.renderer.useRendererServer === false) {
+                  console.log("READY");
+                  const { img, model } = await getMaskTex(this.mii, this);
+                  console.log("DONE");
+                  loadUrl = img;
+                  model.dispose();
+                }
+
+                const tex = await this.#textureLoader.loadAsync(loadUrl);
 
                 if (tex) {
                   // Simple shader mask color space fix

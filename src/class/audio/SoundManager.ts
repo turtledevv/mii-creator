@@ -96,11 +96,7 @@ export class SoundManager {
   }
 }
 
-let sm: SoundManager;
-
-export const setupSoundManager = () => {
-  sm = new SoundManager();
-};
+let sm: SoundManager = new SoundManager();
 
 export const loadBaseSounds = async (
   path: string = "./assets/audio/miiMakerSwitch.zip"

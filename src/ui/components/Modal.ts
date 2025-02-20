@@ -13,6 +13,20 @@ export const buttonsOkCancel = [
   { callback() {}, text: "OK" },
 ];
 
+function closingCallback(modal: Html) {
+  modal
+    .qs(".modal-body")!
+    .qsa("*")!
+    .forEach((a) => a!.attr({ disabled: true, tabindex: "-1" }));
+}
+export function closeModal(modal: Html) {
+  modal.class("closing");
+  closingCallback(modal);
+  setTimeout(() => {
+    modal.cleanup();
+  }, 350);
+}
+
 export default {
   modal: function (
     title: string,
@@ -38,7 +52,8 @@ export default {
     } else {
       content.appendTo(modalBody);
     }
-    new Html("div").class("flex-group").appendTo(modalBody);
+    if (buttons.length > 0)
+      new Html("div").class("flex-group").appendTo(modalBody);
 
     for (let i = 0; i < buttons.length; i++) {
       let button = buttons[i];
@@ -116,24 +131,26 @@ export default {
         }
       );
 
-      elementsArray[0].addEventListener(
-        "keydown",
-        (e: { key: string; shiftKey: any; preventDefault: () => void }) => {
-          if (e.key === "Tab" && e.shiftKey) {
-            e.preventDefault();
-            elementsArray[elementsArray.length - 1].focus();
+      if (elementsArray.length > 0) {
+        elementsArray[0].addEventListener(
+          "keydown",
+          (e: { key: string; shiftKey: any; preventDefault: () => void }) => {
+            if (e.key === "Tab" && e.shiftKey) {
+              e.preventDefault();
+              elementsArray[elementsArray.length - 1].focus();
+            }
           }
-        }
-      );
-      elementsArray[elementsArray.length - 1].addEventListener(
-        "keydown",
-        (e: { key: string; shiftKey: any; preventDefault: () => void }) => {
-          if (e.key === "Tab" && !e.shiftKey) {
-            e.preventDefault();
-            elementsArray[0].focus();
+        );
+        elementsArray[elementsArray.length - 1].addEventListener(
+          "keydown",
+          (e: { key: string; shiftKey: any; preventDefault: () => void }) => {
+            if (e.key === "Tab" && !e.shiftKey) {
+              e.preventDefault();
+              elementsArray[0].focus();
+            }
           }
-        }
-      );
+        );
+      }
     });
 
     requestAnimationFrame(() => {
