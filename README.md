@@ -1,4 +1,4 @@
-# Mii Creator App
+# Mii Creator App (In-dev FFL.js Branch)
 
 ![Preview image](public/assets/images/preview_dark.png)
 
@@ -6,8 +6,8 @@ Create and share Mii characters online with just a few clicks!
 
 ## Credits
 
-- Uses a locally hosted version of the [mii-unsecure.ariankordi.net](https://mii-unsecure.ariankordi.net) [API](https://github.com/ariankordi/FFL-Testing/tree/renderer-server-prototype) by [ariankordi](https://github.com/ariankordi) used to generate 3D Mii heads and icons.
-  - A [fork](https://github.com/datkat21/FFL-Testing-with-hats) is used that adds hat support.
+- Uses [ariankordi](https://github.com/ariankordi)'s awesome [FFL.js](https://github.com/ariankordi/FFL.js) library to generate 3D Mii heads and icons in real-time.
+  - The code has been modified slightly from the original version so that it works for Mii Creator. See the [README](src/external/ffl.js/README.md).
 - [mii-js](https://github.com/PretendoNetwork/mii-js) library used for interacting with Mii data in a JavaScript-friendly way
 - [Some utility code](https://github.com/datkat21/mii-creator/tree/master/src/external/mii-frontend) "borrowed" from arian's website for conversion, QR codes, etc.
 - Custom Mii Maker music by [objecty](https://x.com/objecty)
