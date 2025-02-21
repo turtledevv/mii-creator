@@ -2,7 +2,7 @@ import * as THREE from "three";
 // make sure types work with the patched GLTF loader
 import {
   GLTFLoader as TrueGLTFLoader,
-  type GLTF,
+  type GLTF
 } from "three/addons/loaders/GLTFLoader.js";
 // very hacky but it works to fix the shader bug...
 import { GLTFLoader } from "./3d/Custom_GLTFLoader";
@@ -14,7 +14,7 @@ import {
   MiiSwitchSkinColorSRGB,
   MiiSwitchSkinColorLinear,
   SwitchMiiColorTableLinear,
-  SwitchMiiColorTableSRGB,
+  SwitchMiiColorTableSRGB
 } from "../constants/ColorTables";
 import {
   cMaterialName,
@@ -24,7 +24,7 @@ import {
   cPantsColorGrayLinear,
   cPantsColorRed,
   cPantsColorRedLinear,
-  MiiFavoriteFFLColorLookupTable,
+  MiiFavoriteFFLColorLookupTable
 } from "./3d/shader/fflShaderConst";
 import { MiiEditor, RenderPart } from "./MiiEditor";
 import { Config } from "../config";
@@ -44,11 +44,11 @@ import JSZip from "jszip";
 
 export enum CameraPosition {
   MiiHead,
-  MiiFullBody,
+  MiiFullBody
 }
 export enum SetupType {
   Normal,
-  Screenshot,
+  Screenshot
 }
 
 export class Mii3DScene {
@@ -108,7 +108,7 @@ export class Mii3DScene {
     if (setupType === SetupType.Screenshot) {
       this.#renderer = new THREE.WebGLRenderer({
         antialias: true,
-        preserveDrawingBuffer: true,
+        preserveDrawingBuffer: true
       });
     } else {
       this.#renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -144,7 +144,7 @@ export class Mii3DScene {
           "./cube_map.png", // py.png
           "./cube_map.png", // ny.png
           "./cube_map.png", // pz.png
-          "./cube_map.png", // nz.png
+          "./cube_map.png" // nz.png
         ]);
         this.#scene.environment = environmentMap;
         this.#scene.environmentIntensity = 1.25;
@@ -166,7 +166,7 @@ export class Mii3DScene {
     });
 
     this.#renderer.setSize(512, 512);
-    // this.#renderer.setPixelRatio(window.devicePixelRatio * 0.1);
+    this.#renderer.setPixelRatio(window.devicePixelRatio);
 
     CameraControls.install({ THREE });
 
@@ -251,7 +251,7 @@ export class Mii3DScene {
 
     this.#camera.aspect = this.#parent.offsetWidth / this.#parent.offsetHeight;
     this.#camera.updateProjectionMatrix();
-    this.#renderer.setSize(this.#parent.offsetWidth, this.#parent.offsetHeight);
+    this.resizeRendererToDisplaySize();
   }
   async #loadHatModels(path: string = "./assets/models/hat_models_bundle.zip") {
     this.hatModels = [];
@@ -348,7 +348,19 @@ export class Mii3DScene {
   ) {
     this.#camera.aspect = width / height;
     this.#camera.updateProjectionMatrix();
-    this.#renderer.setSize(width, height);
+    this.resizeRendererToDisplaySize();
+  }
+  // copied from three.js manual code lol
+  resizeRendererToDisplaySize() {
+    const canvas = this.#renderer.domElement;
+    const pixelRatio = window.devicePixelRatio;
+    const width = Math.floor(canvas.clientWidth * pixelRatio);
+    const height = Math.floor(canvas.clientHeight * pixelRatio);
+    const needResize = canvas.width !== width || canvas.height !== height;
+    if (needResize) {
+      this.#renderer.setSize(width, height, false);
+    }
+    return needResize;
   }
   async init() {
     if (this.ready) return;
@@ -466,14 +478,14 @@ export class Mii3DScene {
         cullMode: 1,
         modulateColor: MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor],
         modulateMode: 0,
-        modulateType: 9,
+        modulateType: 9
       };
       if (this.shaderOverride)
         // Override material with a MeshStandardMaterial
         gBodyMesh.material = new THREE.MeshStandardMaterial({
           roughness: 1,
           metalness: 1,
-          color: MiiFavoriteColorLookupTable[this.mii.favoriteColor],
+          color: MiiFavoriteColorLookupTable[this.mii.favoriteColor]
         });
       // adds shader material
       else traverseMesh(gBodyMesh, this.mii);
@@ -485,13 +497,13 @@ export class Mii3DScene {
         cullMode: 1,
         modulateColor: MiiFavoriteFFLColorLookupTable[this.mii.favoriteColor],
         modulateMode: 0,
-        modulateType: 9,
+        modulateType: 9
       };
       if (this.shaderOverride)
         gHandsMesh.material = new THREE.MeshStandardMaterial({
           roughness: 1,
           metalness: 1,
-          color: MiiFavoriteColorLookupTable[this.mii.favoriteColor],
+          color: MiiFavoriteColorLookupTable[this.mii.favoriteColor]
         });
       // adds shader material
       else {
@@ -506,7 +518,7 @@ export class Mii3DScene {
         cullMode: 1,
         modulateColor: cPantsColorGray,
         modulateMode: 0,
-        modulateType: 10,
+        modulateType: 10
       };
       if (this.shaderOverride)
         gLegsMesh.material = new THREE.MeshStandardMaterial({
@@ -516,7 +528,7 @@ export class Mii3DScene {
             this.getPantsColor()[0],
             this.getPantsColor()[1],
             this.getPantsColor()[2]
-          ),
+          )
         });
       // adds shader material
       else traverseMesh(gLegsMesh, this.mii);
@@ -534,7 +546,7 @@ export class Mii3DScene {
 
     const loaders = [
       setupMiiBody(`./assets/models/miiBodyM_${bodyModel}.glb`, "m"),
-      setupMiiBody(`./assets/models/miiBodyF_${bodyModel}.glb`, "f"),
+      setupMiiBody(`./assets/models/miiBodyF_${bodyModel}.glb`, "f")
     ];
 
     await Promise.all(loaders);
@@ -959,7 +971,7 @@ export class Mii3DScene {
                 miiName: this.mii.miiName,
                 creatorName: this.mii.creatorName,
                 miic: encodeURIComponent(this.mii.encode().toString("base64")),
-                ...params,
+                ...params
               } as unknown as any)
             );
           } else {
@@ -1087,7 +1099,7 @@ export class Mii3DScene {
                   // }, 16.66);
                   m.material = new THREE.MeshBasicMaterial({
                     color: 0xffffff,
-                    map: mat.map!,
+                    map: mat.map!
                   });
                   m.material.needsUpdate = true;
                   m.geometry.userData = {
@@ -1100,7 +1112,7 @@ export class Mii3DScene {
                           : this.mii.favoriteColor
                       ],
                     modulateMode: 5, //5,
-                    modulateType: 5, //5,
+                    modulateType: 5 //5,
                   };
 
                   i++;
@@ -1243,7 +1255,7 @@ export class Mii3DScene {
                     transparent: true,
                     metalness: 1,
                     toneMapped: true,
-                    alphaTest: 0.5,
+                    alphaTest: 0.5
                   });
 
                   // Now... Replace it with shader material
