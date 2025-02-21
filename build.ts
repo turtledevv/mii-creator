@@ -15,11 +15,11 @@ export async function compile(
     splitting: false,
     emitDCEAnnotations: true,
     sourcemap: "none",
-    // minify: {
-    //   identifiers: true,
-    //   syntax: true,
-    //   whitespace: true,
-    // },
+    minify: {
+      identifiers: true,
+      syntax: true,
+      whitespace: true,
+    },
   }).catch((e) => {
     console.error("Failed to build:", e);
   })) as BuildOutput;
