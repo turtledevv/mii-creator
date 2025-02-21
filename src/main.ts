@@ -85,6 +85,7 @@ if (Config.renderer.useRendererServer === false) {
   await loadBodyModels();
   await initializeFFLWithResource(Config.renderer.fflResourcePath, FFL);
 
+  // TODO: CLEAN THIS UP so all the wasm/worker loading logic isn't in main.ts??? this was just a temp spot since its before everything else loads
   // Detect and use Web Workers/OffscreenCanvas if available, to optimize icon generation
   if (window.Worker) {
     if (window.OffscreenCanvas) {
