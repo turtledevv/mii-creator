@@ -49,3 +49,5 @@ Thanks to [Timimimi](https://github.com/Timiimiimii) for creating the new hat mo
 2. Clone this repository, and run the `bun i` command to install dependencies.
 3. In one terminal, run `bun build-ts` (if this doesn't work, try running `bun build.ts` to run the file), and in another, run `bun run serve`. If that doesn't work, try `bunx serve -l 3000 -C ./public`. (There is also an optional Go server if you want to use that over the bun server. Both seem to have a strange issue on Windows where you have to wait 5 seconds before you are allowed to refresh the page..)
 4. Any changes you make should log in the build-ts terminal, and check the server on the second terminal to find the port. Live server is not advised when using my build script because it sometimes can refresh too much.
+
+If you are making a pull request, please use a code editor that supports Prettier to keep the code style consistent.
