@@ -59,7 +59,7 @@ export type IconSet = {
 
 export enum RenderPart {
   Head,
-  Face,
+  Face
 }
 
 let activeMii: Mii;
@@ -97,7 +97,7 @@ export class MiiEditor {
 
     document.dispatchEvent(new CustomEvent("editor-launch"));
 
-    this.#loadSoundLoop();
+    this.showLoadIndicator();
     this.dirty = false;
     this.ready = false;
     this.errors = new Map();
@@ -136,19 +136,30 @@ export class MiiEditor {
   }
 
   #loadInterval!: Timer;
-  #loadSoundLoop() {
+
+  // Stuff relating to load indicator
+  showLoadIndicator() {
     const check = () => {
       if (this.ready) {
-        clearInterval(this.#loadInterval);
-        if (this.ui.mii.qs(".loader")) {
-          this.ui.mii.qs(".loader")!.classOff("active");
-        }
+        this.hideLoadIndicator();
         return;
+      } else {
+        // javascript moment
+        if (this.ui)
+          if (this.ui.mii)
+            if (this.ui.mii.qs(".loader"))
+              this.ui.mii.qs(".loader")!.classOn("active");
       }
       playSound("wait");
     };
     check();
-    this.#loadInterval = setInterval(check, 2000);
+    this.#loadInterval = setInterval(check, 1000);
+  }
+  hideLoadIndicator() {
+    clearInterval(this.#loadInterval);
+    if (this.ui.mii.qs(".loader")) {
+      this.ui.mii.qs(".loader")!.classOff("active");
+    }
   }
 
   async #setupUi() {
@@ -221,7 +232,14 @@ export class MiiEditor {
     new Html("img").attr({ crossorigin: "anonymous" }).appendTo(this.ui.mii);
   }
   async #setup3D() {
-    this.ui.scene = new Mii3DScene(this.mii, this.ui.mii.elm);
+    this.ui.scene = new Mii3DScene(
+      this.mii,
+      this.ui.mii.elm,
+      undefined,
+      undefined,
+      undefined,
+      this
+    );
     await this.ui.scene.init();
     this.ui.mii.append(this.ui.scene.getRendererElement());
     window.addEventListener("resize", () => {
@@ -469,7 +487,7 @@ export class MiiEditor {
           this.ui.scene.updateMiiHead(renderPart);
         } else {
           // only reload body
-          this.ui.scene.updateBody();
+          this.ui.scene.updateBody(true);
         }
         break;
     }

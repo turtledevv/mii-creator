@@ -3,7 +3,7 @@ import { getMusicManager } from "../class/audio/MusicManager";
 import {
   getSoundManager,
 } from "../class/audio/SoundManager";
-import Modal from "./components/Modal";
+import Modal, { buttonsOkCancel } from "./components/Modal";
 import { Library } from "./pages/Library";
 import Mii from "../external/mii-js/mii";
 import { MiiEditor } from "../class/MiiEditor";
@@ -29,6 +29,11 @@ export async function setupUi() {
   updateSettings(true);
 
   displayUpdateNotice();
+
+  if (navigator.userAgent.includes("Firefox") && sessionStorage.getItem("seen-firefox-notice") === null) {
+    sessionStorage.setItem("seen-firefox-notice", "yes");
+    Modal.modal("Notice", "You're using Mii Creator under Firefox. The Firefox browser may have slowdowns.", "body", ...buttonsOkCancel)
+  }
 
   // for U theme
   let state: "main" | "edit" = "main";

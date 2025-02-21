@@ -33,7 +33,7 @@ import {
   parseHexOrB64ToUint8Array,
   ViewType,
 } from "../../external/ffl.js/ffl";
-import { getFFL } from "../../main";
+import { getFFL, getFFLWorkerExists, getFFLWorkerMakeIcon } from "../../main";
 import { WebGLRenderer } from "three";
 export const savedMiiCount = async () =>
   (await localforage.keys()).filter((k) => k.startsWith("mii-")).length;
@@ -65,8 +65,15 @@ export const miiIconUrl = async (
     // Momentarily create CharModel
     let dataURL = "undefined",
       model: any;
+    const dataU8 = mii.encodeStudio();
+
+    if (getFFLWorkerExists()) {
+      console.log("Asking worker thread for an icon plz!");
+      const icon = await getFFLWorkerMakeIcon(dataU8, view);
+      return icon;
+    }
+
     try {
-      const dataU8 = mii.encodeStudio();
       model = createCharModel(
         dataU8,
         undefined,
@@ -94,9 +101,7 @@ export const miiIconUrl = async (
       );
       // console.log(`charModel for ${mii.miiName}:`, model);
     } catch (e) {
-      console.error(
-        `loadCharacterButtons: Could not make icon for ${mii.miiName}: ${e}`
-      );
+      console.error(`Library: Could not make icon for ${mii.miiName}: ${e}`);
     } finally {
       model.dispose();
       return dataURL;
@@ -253,7 +258,16 @@ export async function Library(highlightMiiId?: string) {
         )}`;
       }
 
-      let miiImage = new Html("img").class("lazy").attr({});
+      let miiImage = new Html("img").class("lazy").attr({
+        // "src":
+        //   (await miiIconUrl(
+        //     miiData,
+        //     "library",
+        //     "variableiconbody",
+        //     180,
+        //     miiCount
+        //   )) + extraData,
+      });
 
       // "data-src":
       // (await miiIconUrl(
@@ -265,7 +279,7 @@ export async function Library(highlightMiiId?: string) {
       // )) + extraData,
       miiIconUrl(miiData, "library", "variableiconbody", 180, miiCount).then(
         (r) => {
-          miiImage.attr({ "data-src": r });
+          miiImage.attr({ src: r });
         }
       );
 

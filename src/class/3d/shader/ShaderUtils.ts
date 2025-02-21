@@ -36,6 +36,8 @@ import type Mii from "../../../external/mii-js/mii";
 import { ShaderType } from "../../../constants/BodyShaderTypes";
 import { getSetting } from "../../../util/SettingsHelper";
 import { miitomoFragmentShader, miitomoVertexShader } from "./MiitomoShader";
+import { FFLShaderMaterial as FFLShaderMaterialInstance } from "../../../external/ffl.js/FFLShaderMaterial";
+import { LUTShaderMaterial as LUTShaderMaterialInstance } from "../../../external/ffl.js/LUTShaderMaterial";
 
 export function traverseAddShader(
   model: THREE.Group<THREE.Object3DEventMap>,
@@ -461,28 +463,11 @@ export async function traverseMesh(node: THREE.Mesh, mpCharInfo: Mii) {
       transparent: originalMaterial.transparent, // Handle transparency
       alphaTest: originalMaterial.alphaTest, // Handle alpha testing
     });
-  } else if (shaderSetting.startsWith("wiiu")) {
-    if (
-      modulateType === cMaterialName.FFL_MODULATE_TYPE_SHAPE_BODY ||
-      modulateType === cMaterialName.FFL_MODULATE_TYPE_SHAPE_PANTS
-    ) {
-      switch (modulateType) {
-        case cMaterialName.FFL_MODULATE_TYPE_SHAPE_BODY:
-          materialParam =
-            cMaterialParam[cMaterialName.FFL_MODULATE_TYPE_SHAPE_BODY];
-          break;
-        case cMaterialName.FFL_MODULATE_TYPE_SHAPE_PANTS:
-          materialParam =
-            cMaterialParam[cMaterialName.FFL_MODULATE_TYPE_SHAPE_PANTS];
-          break;
-      }
-
-      modifyMaterialParam();
-
-      finalMat = new THREE.ShaderMaterial({
-        vertexShader: fflVertexShader,
-        fragmentShader: fflFragmentShader,
-        uniforms: {
+  } else if (
+    shaderSetting.startsWith("wiiu") ||
+    shaderSetting === ShaderType.LightDisabled
+  ) {
+    /*      uniforms: {
           u_const1: { value: modulateColor },
           u_light_ambient: { value: lightAmbient },
           u_light_diffuse: { value: lightDiffuse },
@@ -499,139 +484,23 @@ export async function traverseMesh(node: THREE.Mesh, mpCharInfo: Mii) {
           u_rim_power: { value: cRimPower },
           s_texture: { value: originalMaterial.map },
         },
-        defines: defines,
-        side: side,
-        // NOTE: usually these blend modes are
-        // only set for DrawXlu stage
-        blending: THREE.CustomBlending,
-        blendDstAlpha: THREE.OneFactor,
-        transparent: originalMaterial.transparent, // Handle transparency
-        alphaTest: originalMaterial.alphaTest, // Handle alpha testing
-      });
-    }
-    // Create a custom ShaderMaterial
-    else {
-      finalMat = new THREE.ShaderMaterial({
-        vertexShader: fflVertexShader,
-        fragmentShader: fflFragmentShader,
-        uniforms: {
-          u_const1: { value: modulateColor },
-          u_light_ambient: { value: lightAmbient },
-          u_light_diffuse: { value: lightDiffuse },
-          u_light_specular: { value: lightSpecular },
-          u_light_dir: { value: cLightDir },
-          u_light_enable: { value: lightEnable },
-          u_material_ambient: { value: materialParam.ambient },
-          u_material_diffuse: { value: materialParam.diffuse },
-          u_material_specular: { value: materialParam.specular },
-          u_material_specular_mode: { value: materialParam.specularMode },
-          u_material_specular_power: { value: materialParam.specularPower },
-          u_mode: { value: modulateMode },
-          u_rim_color: { value: cRimColor },
-          u_rim_power: { value: cRimPower },
-          s_texture: { value: originalMaterial.map },
-        },
-        defines: defines,
-        side: side,
-        // NOTE: usually these blend modes are
-        // only set for DrawXlu stage
-        blending: THREE.CustomBlending,
-        blendDstAlpha: THREE.OneFactor,
-        transparent: originalMaterial.transparent, // Handle transparency
-        alphaTest: originalMaterial.alphaTest, // Handle alpha testing
-      });
-    }
-  } else if (shaderSetting === ShaderType.LightDisabled) {
-    // it's easier to use the shader w/ lightEnable set to false for this
-    // as MeshBasicMaterial is too bright
-    finalMat = new THREE.ShaderMaterial({
-      vertexShader: fflVertexShader,
-      fragmentShader: fflFragmentShader,
-      uniforms: {
-        u_const1: { value: modulateColor },
-        u_light_ambient: { value: cLightAmbient },
-        u_light_diffuse: { value: cLightDiffuse },
-        u_light_specular: { value: cLightSpecular },
-        u_light_dir: { value: cLightDir },
-        u_light_enable: { value: false },
-        u_material_ambient: { value: materialParam.ambient },
-        u_material_diffuse: { value: materialParam.diffuse },
-        u_material_specular: { value: materialParam.specular },
-        u_material_specular_mode: { value: materialParam.specularMode },
-        u_material_specular_power: { value: materialParam.specularPower },
-        u_mode: { value: modulateMode },
-        u_rim_color: { value: cRimColor },
-        u_rim_power: { value: cRimPower },
-        s_texture: { value: originalMaterial.map },
-      },
-      defines: defines,
-      side: side,
-      // NOTE: usually these blend modes are
-      // only set for DrawXlu stage
-      blending: THREE.CustomBlending,
-      blendDstAlpha: THREE.OneFactor,
-      transparent: originalMaterial.transparent, // Handle transparency
-      alphaTest: originalMaterial.alphaTest, // Handle alpha testing
+        */
+    console.log("Modulate type:", modulateType);
+    finalMat = new FFLShaderMaterialInstance({
+      modulateColor: modulateColor.toArray(),
+      modulateMode,
+      modulateType: modulateType,
+      map: originalMaterial.map || undefined,
+      side,
+      lightEnable: shaderSetting.startsWith("wiiu") ? true : false,
     });
   } else if (shaderSetting === ShaderType.Miitomo) {
-    console.log("You are using Miitomo shader :)");
-    finalMat = new THREE.ShaderMaterial({
-      vertexShader: miitomoVertexShader,
-      fragmentShader: miitomoFragmentShader,
-      uniforms: {
-        u_const1: { value: modulateColor },
-        u_light_ambient: { value: cLightAmbient },
-        u_light_diffuse: { value: cLightDiffuse },
-        u_light_specular: { value: cLightSpecular },
-        u_light_dir: { value: cLightDir },
-        u_light_enable: { value: 1 },
-        u_material_ambient: { value: materialParam.ambient },
-        u_material_diffuse: { value: materialParam.diffuse },
-        u_material_specular: { value: materialParam.specular },
-        u_material_specular_mode: { value: materialParam.specularMode },
-        u_material_specular_power: { value: materialParam.specularPower },
-        u_mode: { value: modulateMode },
-        u_rim_color: { value: cRimColor },
-        u_rim_power: { value: cRimPower },
-        s_texture: { value: originalMaterial.map },
-
-        // Vertex shader normals :)
-        uAlpha: { value: 1.0 },
-        // three.js handles skinning
-        uBoneCount: { value: 0 },
-        uBoneMatrices: { value: [] },
-        uBoneNormalMatrices: { value: [] },
-        uDirLightColor0: {
-          value: new THREE.Vector3(0.35137, 0.32392, 0.32392),
-        },
-        uDirLightColor1: {
-          value: new THREE.Vector3(0.10039, 0.09255, 0.09255),
-        },
-        uDirLightCount: { value: 2 },
-        uDirLightDirAndType0: {
-          value: new THREE.Vector4(-0.2, 0.5, 0.8, -1.0),
-        },
-        uDirLightDirAndType1: {
-          value: new THREE.Vector4(0.0, -0.19612, 0.98058, -1.0),
-        },
-        uEyePt: {
-          value: new THREE.Vector3(0, 79.99184, 701.21417),
-        },
-        uHSLightGroundColor: {
-          value: new THREE.Vector3(0.87843, 0.72157, 0.5898),
-        },
-        uHSLightSkyColor: {
-          value: new THREE.Vector3(0.87843, 0.83451, 0.80314),
-        },
-      },
-      defines: defines,
-      side: side,
-      // NOTE: usually these blend modes are
-      // only set for DrawXlu stage
-      blending: THREE.CustomBlending,
-      blendDstAlpha: THREE.OneFactor,
-      transparent: originalMaterial.transparent, // Handle transparency
-      alphaTest: originalMaterial.alphaTest, // Handle alpha testing
+    finalMat = new LUTShaderMaterialInstance({
+      modulateColor: modulateColor.toArray(),
+      modulateMode,
+      modulateType: modulateType,
+      map: originalMaterial.map || undefined,
+      side,
     });
   } else {
     finalMat = new THREE.ShaderMaterial({

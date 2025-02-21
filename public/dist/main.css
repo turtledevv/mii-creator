@@ -569,10 +569,10 @@ h6 {
 }
 @keyframes spinTranslated {
   from {
-    transform: translate(-50%, -50%) rotate(0deg);
+    transform: rotate(0deg);
   }
   to {
-    transform: translate(-50%, -50%) rotate(360deg);
+    transform: rotate(360deg);
   }
 }
 @keyframes spinInPlaceAndCry {
@@ -673,7 +673,8 @@ h6 {
   text-align: center;
 }
 .modal.random-mii-grid .modal-content {
-  width: 100%;
+  max-height: 720px;
+  width: 1280px;
 }
 .modal.random-mii-grid .modal-content .modal-body .random-mii-container {
   display: grid;
@@ -835,12 +836,16 @@ select[type=checkbox]:checked {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 52px;
-  height: 52px;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(3px);
 }
 .loader.active {
   opacity: 1;
+}
+.loader.active svg {
   animation: spinTranslated 0.5s linear infinite;
 }
 
@@ -946,6 +951,7 @@ select[type=checkbox]:checked {
   justify-content: center;
   align-items: center;
   position: relative;
+  overflow: hidden;
 }
 .ui-base .mii-holder .render-mode-toggle {
   position: absolute;

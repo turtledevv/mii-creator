@@ -103,6 +103,7 @@ export function EyebrowTab(data: TabRenderInit) {
               min: 0,
               max: 11,
               part: RenderPart.Face,
+              inverse: true
             },
             {
               type: FeatureSetType.Range,

@@ -5,12 +5,16 @@ import { RandomInt } from "./Numbers";
 import { cMaterialName } from "../class/3d/shader/fflShaderConst";
 import {
   CharModel,
+  convertStudioCharInfoToFFLiCharInfo,
   createCharModel,
   FFLCharModelDesc,
   FFLCharModelDescDefault,
+  FFLiCharInfo,
   FFLModelFlag,
   initCharModelTextures,
   setMaskTextureHook,
+  StudioCharInfo,
+  updateCharModel,
 } from "../external/ffl.js/ffl";
 import { getFFL } from "../main";
 import { getTempRenderer } from "../ui/pages/Library";
@@ -45,7 +49,10 @@ export type ModelFlag =
 export async function getHeadModel(
   mii: Mii,
   Mii3DScene: Mii3DScene,
-  modelFlag: ModelFlag
+  modelFlag: ModelFlag,
+  charModelRef?: CharModel,
+  rendererRef?: THREE.WebGLRenderer,
+  descOrExpFlag?: Object | any[] | Uint32Array | null
 ): Promise<GLTF> {
   // In the future, this could be hooked up to a custom rendering library (FFL under WASM or a custom asset loader)
   // For now, this will just return a cube with some FFL shader properties to test if it's working.
@@ -60,14 +67,30 @@ export async function getHeadModel(
   let currentCharModel: CharModel | null;
 
   try {
-    currentCharModel = createCharModel(
-      dataU8,
-      modelDesc,
-      // window.LUTShaderMaterial,
-      window.FFLShaderMaterial,
-      getFFL(),
-      false
-    );
+    if (charModelRef) {
+      if (!rendererRef)
+        throw new Error("Missing renderer when trying to update CharModel");
+
+      currentCharModel = charModelRef;
+
+      // Create new charinfo data
+      const studioCharInfo = StudioCharInfo.unpack(dataU8);
+      const newCharInfo = FFLiCharInfo.pack(
+        convertStudioCharInfoToFFLiCharInfo(studioCharInfo)
+      );
+
+      // update char model
+      updateCharModel(currentCharModel, newCharInfo, rendererRef, modelDesc);
+    } else {
+      currentCharModel = createCharModel(
+        dataU8,
+        modelDesc,
+        window.LUTShaderMaterial,
+        // window.FFLShaderMaterial,
+        getFFL(),
+        false
+      );
+    }
     // Initialize textures for the new CharModel.
     initCharModelTextures(currentCharModel, Mii3DScene.getRenderer());
   } catch (err) {
@@ -128,17 +151,20 @@ export async function getMaskTex(
     currentCharModel = createCharModel(
       dataU8,
       modelDesc,
-      // window.LUTShaderMaterial,
-      window.FFLShaderMaterial,
+      window.LUTShaderMaterial,
+      // window.FFLShaderMaterial,
       getFFL(),
       false
     );
-    // Initialize textures for the new CharModel.
-    setMaskTextureHook((dataURL: string) => {
-      img = dataURL;
-      console.log("Mask texture hook caught!");
+    
+    // weird workaround to promisify the texture outcome?
+    img = await new Promise((resolve) => {
+      setMaskTextureHook((dataURL: any) => {
+        resolve(dataURL.result);
+      });
+      // Initialize textures for the new CharModel.
+      initCharModelTextures(currentCharModel!, Mii3DScene.getRenderer());
     });
-    initCharModelTextures(currentCharModel, Mii3DScene.getRenderer());
   } catch (err) {
     currentCharModel = null;
     alert(`Error creating/updating CharModel: ${err}`);

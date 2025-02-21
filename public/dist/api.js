@@ -1,4 +1,147 @@
-function m(e,n){let A=document.createElement("iframe");if(n)A.style.width="100%",A.style.height="100%",A.style.top="0",A.style.left="0",A.style.border="0",A.style.position="fixed",A.style.zIndex="99999",document.body.appendChild(A);return A.src=`${import.meta.url.replace("dist/api.js","")}?${e}`,A}var c={configuration:{music:!0},async editMii(e="AwEAAAAAAAAAAAAAgP9wmQAAAAAAAAAAAABNAGkAaQAAAAAAAAAAAAAAAAAAAEBAAAAhAQJoRBgmNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMNn",n=!0,A=["headshot"]){return new Promise((d,a)=>{let t=m(`data=${encodeURIComponent(e)}&renderTypes=${A.map((i)=>encodeURIComponent(i)).join(",")}&origin=${encodeURIComponent(location.origin)}`,n);function o(){if(n)t.style.width=`${window.innerWidth}px`,t.style.height=`${window.innerHeight}px`}function s(i){let r=i;if(r.data===void 0)return;if(r.data.type===void 0)return;if(r.data.type!=="miic-data-finalize")return;t.style.transition="opacity 0.5s linear",t.style.opacity="0",setTimeout(()=>{t.remove(),window.removeEventListener("resize",o),window.removeEventListener("onmessage",s),d(r.data)},500)}window.addEventListener("resize",o),window.addEventListener("message",s)})},async selectMii(e=!0,n=["headshot"]){return new Promise((A,d)=>{let a=m(`select=yes&renderTypes=${n.map((s)=>encodeURIComponent(s)).join(",")}`,e);function t(){if(e)a.style.width=`${window.innerWidth}px`,a.style.height=`${window.innerHeight}px`}function o(s){let i=s;if(i.data===void 0)return;if(i.data.type===void 0)return;if(i.data.type!=="miic-select")return;a.style.transition="opacity 0.5s linear",a.style.opacity="0",setTimeout(()=>{a.remove(),window.removeEventListener("resize",t),window.removeEventListener("onmessage",o),A(i.data)},500)}window.addEventListener("resize",t),window.addEventListener("message",o)})},newMii(e="male"){switch(e){case"male":return this.editMii("AwEAAAAAAAAAAAAAgP9wmQAAAAAAAAAAAABNAGkAaQAAAAAAAAAAAAAAAAAAAEBAAAAhAQJoRBgmNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMNn");case"female":return this.editMii("AwEAAAAAAAAAAAAAgN8ZmgAAAAAAAAAAAQBNAGkAaQAAAAAAAAAAAAAAAAAAAEBAAAAMAQRoQxggNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFik")}},configure(e){if(e.music!==void 0&&typeof e.music==="boolean")this.configuration.music=e.music}};export{c as default};
+var __create = Object.create;
+var __getProtoOf = Object.getPrototypeOf;
+var __defProp = Object.defineProperty;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __toESM = (mod, isNodeMode, target) => {
+  target = mod != null ? __create(__getProtoOf(mod)) : {};
+  const to = isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target;
+  for (let key of __getOwnPropNames(mod))
+    if (!__hasOwnProp.call(to, key))
+      __defProp(to, key, {
+        get: () => mod[key],
+        enumerable: true
+      });
+  return to;
+};
+var __moduleCache = /* @__PURE__ */ new WeakMap;
+var __toCommonJS = (from) => {
+  var entry = __moduleCache.get(from), desc;
+  if (entry)
+    return entry;
+  entry = __defProp({}, "__esModule", { value: true });
+  if (from && typeof from === "object" || typeof from === "function")
+    __getOwnPropNames(from).map((key) => !__hasOwnProp.call(entry, key) && __defProp(entry, key, {
+      get: () => from[key],
+      enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
+    }));
+  __moduleCache.set(from, entry);
+  return entry;
+};
+var __commonJS = (cb, mod) => () => (mod || cb((mod = { exports: {} }).exports, mod), mod.exports);
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, {
+      get: all[name],
+      enumerable: true,
+      configurable: true,
+      set: (newValue) => all[name] = () => newValue
+    });
+};
+var __esm = (fn, res) => () => (fn && (res = fn(fn = 0)), res);
+var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, {
+  get: (a, b) => (typeof require !== "undefined" ? require : a)[b]
+}) : x)(function(x) {
+  if (typeof require !== "undefined")
+    return require.apply(this, arguments);
+  throw Error('Dynamic require of "' + x + '" is not supported');
+});
 
-//# debugId=663EC4E6CC05304664756E2164756E21
-//# sourceMappingURL=api.js.map
+// src/api.ts
+function makeFrame(params, fullscreen) {
+  const frame = document.createElement("iframe");
+  if (fullscreen) {
+    frame.style.width = `100%`;
+    frame.style.height = `100%`;
+    frame.style.top = "0";
+    frame.style.left = "0";
+    frame.style.border = "0";
+    frame.style.position = "fixed";
+    frame.style.zIndex = "99999";
+    document.body.appendChild(frame);
+  }
+  frame.src = `${import.meta.url.replace("dist/api.js", "")}?${params}`;
+  return frame;
+}
+var api_default = {
+  configuration: {
+    music: true
+  },
+  async editMii(data = "AwEAAAAAAAAAAAAAgP9wmQAAAAAAAAAAAABNAGkAaQAAAAAAAAAAAAAAAAAAAEBAAAAhAQJoRBgmNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMNn", fullscreen = true, renderTypes = ["headshot"]) {
+    return new Promise((resolve, reject) => {
+      const frame = makeFrame(`data=${encodeURIComponent(data)}&renderTypes=${renderTypes.map((r) => encodeURIComponent(r)).join(",")}&origin=${encodeURIComponent(location.origin)}`, fullscreen);
+      function resizeCallback() {
+        if (fullscreen) {
+          frame.style.width = `${window.innerWidth}px`;
+          frame.style.height = `${window.innerHeight}px`;
+        }
+      }
+      function postmessageCallback(event) {
+        let evt = event;
+        if (evt.data === undefined)
+          return;
+        if (evt.data.type === undefined)
+          return;
+        if (evt.data.type !== "miic-data-finalize")
+          return;
+        frame.style.transition = "opacity 0.5s linear";
+        frame.style.opacity = "0";
+        setTimeout(() => {
+          frame.remove();
+          window.removeEventListener("resize", resizeCallback);
+          window.removeEventListener("onmessage", postmessageCallback);
+          resolve(evt.data);
+        }, 500);
+      }
+      window.addEventListener("resize", resizeCallback);
+      window.addEventListener("message", postmessageCallback);
+    });
+  },
+  async selectMii(fullscreen = true, renderTypes = ["headshot"]) {
+    return new Promise((resolve, reject) => {
+      const frame = makeFrame(`select=yes&renderTypes=${renderTypes.map((r) => encodeURIComponent(r)).join(",")}`, fullscreen);
+      function resizeCallback() {
+        if (fullscreen) {
+          frame.style.width = `${window.innerWidth}px`;
+          frame.style.height = `${window.innerHeight}px`;
+        }
+      }
+      function postmessageCallback(event) {
+        let evt = event;
+        if (evt.data === undefined)
+          return;
+        if (evt.data.type === undefined)
+          return;
+        if (evt.data.type !== "miic-select")
+          return;
+        frame.style.transition = "opacity 0.5s linear";
+        frame.style.opacity = "0";
+        setTimeout(() => {
+          frame.remove();
+          window.removeEventListener("resize", resizeCallback);
+          window.removeEventListener("onmessage", postmessageCallback);
+          resolve(evt.data);
+        }, 500);
+      }
+      window.addEventListener("resize", resizeCallback);
+      window.addEventListener("message", postmessageCallback);
+    });
+  },
+  newMii(gender = "male") {
+    switch (gender) {
+      case "male":
+        return this.editMii("AwEAAAAAAAAAAAAAgP9wmQAAAAAAAAAAAABNAGkAaQAAAAAAAAAAAAAAAAAAAEBAAAAhAQJoRBgmNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMNn");
+      case "female":
+        return this.editMii("AwEAAAAAAAAAAAAAgN8ZmgAAAAAAAAAAAQBNAGkAaQAAAAAAAAAAAAAAAAAAAEBAAAAMAQRoQxggNEYUgRIXaA0AACkAUkhQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFik");
+    }
+  },
+  configure(newConfiguration) {
+    if (newConfiguration.music !== undefined && typeof newConfiguration.music === "boolean") {
+      this.configuration.music = newConfiguration.music;
+    }
+  }
+};
+export {
+  api_default as default
+};

@@ -107,6 +107,7 @@ export function EyeTab(data: TabRenderInit) {
               min: 0,
               max: 7,
               part: RenderPart.Face,
+              inverse: true
             },
             {
               type: FeatureSetType.Range,

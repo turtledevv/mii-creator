@@ -10,8 +10,16 @@ import {FFLShaderMaterial} from "./FFLShaderMaterial.js";
 import {LUTShaderMaterial} from "./LUTShaderMaterial.js";
 import { cMaterialName } from "../../class/3d/shader/fflShaderConst.js";
 
-window.FFLShaderMaterial = FFLShaderMaterial;
-window.LUTShaderMaterial = LUTShaderMaterial;
+// Web Worker shenanigans
+let global;
+if (typeof window === 'undefined') {
+	global = self;
+} else {
+	global = window;
+}
+
+global.FFLShaderMaterial = FFLShaderMaterial;
+global.LUTShaderMaterial = LUTShaderMaterial;
 
 // Cloneable models used 
 let bodyModels = {
@@ -37,8 +45,9 @@ let bodyModels = {
 
 var loader = new GLTFLoader();
 
+//! NOTE: THIS ASSUMES THE ROOT IS THE PUBLIC FOLDER
 function makeModelPath(gender, modelName) {
-	return `./assets/models/miiBody${gender}_${modelName}.glb`
+	return `/assets/models/miiBody${gender}_${modelName}.glb`
 }
 async function loadModel(modelPath) {
 	const model = await loader.loadAsync(modelPath);
@@ -59,10 +68,12 @@ async function loadModel(modelPath) {
 	return scene;
 }
 
-bodyModels.Miitomo.m = await loadModel(makeModelPath("M", "miitomo"));
-bodyModels.Miitomo.f = await loadModel(makeModelPath("F", "miitomo"));
+export async function loadBodyModels() {
+	bodyModels.Miitomo.m = await loadModel(makeModelPath("M", "miitomo"));
+	bodyModels.Miitomo.f = await loadModel(makeModelPath("F", "miitomo"));
+}
 
-window.bodyModels = bodyModels;
+global.bodyModels = bodyModels;
 
 // Changes:
 // - Modularized by adding import/export
@@ -175,7 +186,7 @@ window;
 if (_ === undefined) {
 	// NOTE only here to satisfy eslint
 	/** @type {StructFu} */
-	const _ = window._;
+	const _ = global._;
 }
 _;
 
@@ -508,7 +519,7 @@ const FFLCreateID = _.struct([
 /**
  * @type {StructInstance<FFLiCharInfo>}
  */
-const FFLiCharInfo = _.struct([
+export const FFLiCharInfo = _.struct([
 	_.int32le('miiVersion'),
 	_.struct('faceline', [_.int32le('type'), _.int32le('color'),
 		_.int32le('texture'), _.int32le('make')]),
@@ -817,9 +828,9 @@ const FFLTextureCallback = _.struct([
 class TextureManager {
 	/**
 	 * @constructor
-	 * @param {Module} [module=window.Module] - The Emscripten module.
+	 * @param {Module} [module=global.Module] - The Emscripten module.
 	 */
-	constructor(module = window.Module) {
+	constructor(module = global.Module) {
 		this.module = module;
 		this.textures = new Map(); // Internal map of texture id -> THREE.Texture.
 		this.textureCallbackPtr = null;
@@ -898,7 +909,7 @@ class TextureManager {
 	_textureCreateFunc(_, textureInfoPtr, texturePtrPtr) {
 		const u8 = this.module.HEAPU8.subarray(textureInfoPtr, textureInfoPtr + FFLTextureInfo.size);
 		const textureInfo = FFLTextureInfo.unpack(u8);
-		console.debug(`_textureCreateFunc: width=${textureInfo.width}, height=${textureInfo.height}, format=${textureInfo.format}, imageSize=${textureInfo.imageSize}, mipCount=${textureInfo.mipCount}`);
+		// console.debug(`_textureCreateFunc: width=${textureInfo.width}, height=${textureInfo.height}, format=${textureInfo.format}, imageSize=${textureInfo.imageSize}, mipCount=${textureInfo.mipCount}`);
 
 		const dataFormat = this._getTextureFormat(textureInfo.format);
 
@@ -985,9 +996,10 @@ class TextureManager {
 		// cap/noseline/glass textures before we are
 		// finished with the model itself. It is now only logging
 		const tex = this.textures.get(texId);
-		if (tex) {
-			console.debug('Delete texture    ', tex.id);
-		}
+
+		// if (tex) {
+		// 	console.debug('Delete texture    ', tex.id);
+		// }
 	}
 
 	/**
@@ -1019,7 +1031,7 @@ class TextureManager {
 
 		this.textures.set(id, texture);
 		// Log is spaced to match delete/deleting/dispose messages.
-		console.debug('Adding texture    ', texture.id);
+		// console.debug('Adding texture    ', texture.id);
 	}
 
 	/**
@@ -1035,7 +1047,7 @@ class TextureManager {
 			// the original dispose method on textures.
 			texture._dispose();
 			texture.source = null;
-			console.debug('Deleted texture   ', id);
+			// console.debug('Deleted texture   ', id);
 			this.textures.delete(id);
 		}
 	}
@@ -1162,11 +1174,11 @@ let _resourceDesc;
  * @param {Uint8Array|Response} resource - The FFL resource data.
  *    Use a TypedArray if you have the raw bytes, or a fetch response containing
  *    the FFL resource file.
- * @param {Module} [module=window.Module] - The Emscripten module instance.
+ * @param {Module} [module=global.Module] - The Emscripten module instance.
  * @returns {Promise<void>} Resolves when FFL is fully initialized.
  * @todo TODO TODO: DOES NOT WORK PROPERLY when CACHE IS ENABLED ????
  */
-async function initializeFFL(resource, module = window.Module) {
+async function initializeFFL(resource, module = global.Module) {
 	console.debug('initializeFFL: Entrypoint, waiting for module to be ready.');
 
 	let resourceDescPtr; // Store pointer to free later.
@@ -1247,11 +1259,11 @@ async function initializeFFL(resource, module = window.Module) {
  * It then calls initializeFFL on the specified module.
  *
  * @param {string|null} [resourcePath=null] - The URL for the FFL resource.
- * @param {Module} [module=window.Module] - The Emscripten module instance.
+ * @param {Module} [module=global.Module] - The Emscripten module instance.
  * @returns {Promise<void>} Returns when the fetch and initializeFFL are finished.
  * @throws {Error} resourcePath must be a URL string, or, an HTML element with FFL resource must exist and have content.
  */
-export async function initializeFFLWithResource(resourcePath = null, module = window.Module) {
+export async function initializeFFLWithResource(resourcePath = null, module = global.Module) {
 	// Query selector string for element with "content" attribute for path to the resource.
 	const querySelectorResourcePath = 'meta[itemprop=ffl-js-resource-fetch-path]';
 
@@ -1274,7 +1286,7 @@ export async function initializeFFLWithResource(resourcePath = null, module = wi
 		await initializeFFL(response, module);
 		// TextureManager must be initialized after FFL.
 		/** @global */
-		window.FFLTextures = new TextureManager(module);
+		global.FFLTextures = new TextureManager(module);
 		console.debug('initializeFFLWithResource: FFLiManager and TextureManager initialized, exiting');
 	} catch (error) {
 		// TODO: should this alert or no, because it's meant to be a nice wrapper
@@ -1326,10 +1338,10 @@ export class CharModel {
 	/**
 	 * @constructor
 	 * @param {number} ptr - Pointer to the FFLiCharModel structure in heap.
-	 * @param {Module} [module=window.Module] - The Emscripten module.
+	 * @param {Module} [module=global.Module] - The Emscripten module.
 	 * @param {Function} materialClass - The material constructor (e.g., FFLShaderMaterial).
 	 */
-	constructor(ptr, module = window.Module, materialClass = window.FFLShaderMaterial) {
+	constructor(ptr, module = global.Module, materialClass = global.FFLShaderMaterial) {
 		/** @private */
 		this._module = module;
 		/** @public */
@@ -1566,7 +1578,7 @@ export class CharModel {
 	_disposeTextures() {
 		// Dispose RenderTargets.
 		if (this._facelineTarget) {
-			console.debug(`Disposing target ${this._facelineTarget.texture.id} for faceline`);
+			// console.debug(`Disposing target ${this._facelineTarget.texture.id} for faceline`);
 			this._facelineTarget.dispose();
 			this._facelineTarget = null;
 		}
@@ -1576,7 +1588,7 @@ export class CharModel {
 				// No mask for this expression.
 				return;
 			}
-			console.debug(`Disposing target ${target.texture.id} for mask ${i}`);
+			// console.debug(`Disposing target ${target.texture.id} for mask ${i}`);
 			target.dispose();
 			this._maskTargets[i] = null;
 		});
@@ -1594,7 +1606,7 @@ export class CharModel {
 	 */
 	dispose() {
 		// Print the permanent __ptr rather than _ptr.
-		console.debug('CharModel.dispose: ptr =', this.__ptr);
+		// console.debug('CharModel.dispose: ptr =', this.__ptr);
 		this._finalizeCharModel(); // Should've been called already
 		// Dispose meshes: materials, geometries, textures.
 		disposeMeshes(this.meshes);
@@ -1994,11 +2006,11 @@ export function makeExpressionFlag(expressions) {
  * @param {Uint8Array|FFLiCharInfo} data - Character data. Accepted types: FFLStoreData, FFLiCharInfo (as Uint8Array and object), StudioCharInfo
  * @param {Object} [modelDesc=FFLCharModelDesc.default] - The model description.
  * @param {any} materialClass - Constructor for the material (e.g. FFLShaderMaterial).
- * @param {Module} [module=window.Module] - The Emscripten module.
+ * @param {Module} [module=global.Module] - The Emscripten module.
  * @param {boolean} verify - Whether the CharInfo provided should be verified.
  * @returns {CharModel} The new CharModel instance.
  */
-export function createCharModel(data, modelDesc, materialClass, module = window.Module, verify = true) {
+export function createCharModel(data, modelDesc, materialClass, module = global.Module, verify = true) {
 	modelDesc = modelDesc || FFLCharModelDesc.default;
 	// Allocate memory for model source, description, char model, and char info.
 	const modelSourcePtr = module._malloc(FFLCharModelSource.size);
@@ -2046,7 +2058,7 @@ export function createCharModel(data, modelDesc, materialClass, module = window.
 	/** @private */
 	charModel._data = data; // Store original data passed to function.
 
-	console.debug(`createCharModel: Initialized for "${charModel._model.charInfo.personal.name}", ptr =`, charModelPtr);
+	// console.debug(`createCharModel: Initialized for "${charModel._model.charInfo.personal.name}", ptr =`, charModelPtr);
 	return charModel;
 }
 
@@ -2287,11 +2299,11 @@ function _bindDrawParamGeometry(drawParam, module) {
  * Does not assign texture for faceline or mask types.
  *
  * @param {FFLModulateParam} modulateParam - drawParam.modulateParam.
- * @param {TextureManager} [textureManager=window.FFLTextures] - The TextureManager instance for which to look for the texture referenced.
+ * @param {TextureManager} [textureManager=global.FFLTextures] - The TextureManager instance for which to look for the texture referenced.
  * @returns {THREE.Texture|null} The texture if found.
  * @throws {Error} Throws if pTexture2D refers to a texture that was not found in the TextureManager.
  */
-function _getTextureFromModulateParam(modulateParam, textureManager = window.FFLTextures) {
+function _getTextureFromModulateParam(modulateParam, textureManager = global.FFLTextures) {
 	// Only assign texture if pTexture2D is not null.
 	if (!modulateParam.pTexture2D ||
 		// Ignore faceline and mask.
@@ -2378,11 +2390,12 @@ function _getVector4FromFFLColorPtr(colorPtr, module) {
  * @todo: TODO: eslint keeps making this const
  */
 let _noCharModelCleanupDebug = false;
-/** @global */
-let _displayRenderTexturesElement = document.getElementById('ffl-js-display-render-textures');
-if (_displayRenderTexturesElement) {
-	console.warn('displaying faceline and mask textures to texture-display element, remove it when you\'re done testing');
-}
+// Commented out as it's not being used and it breaks Web Worker compatibility.
+// /** @global */
+// let _displayRenderTexturesElement = document.getElementById('ffl-js-display-render-textures');
+// if (_displayRenderTexturesElement) {
+// 	console.warn('displaying faceline and mask textures to texture-display element, remove it when you\'re done testing');
+// }
 
 // // ---------------------------------------------------------------------
 // //  CharModel Render Textures
@@ -2426,15 +2439,15 @@ let _facelineTextureHook = () => null;
 let _maskTextureHook = () => null;
 
 export function setFacelineTextureHook(fn) {
-	_facelineTextureHook = (target, renderer) => {
-		const dataURL = renderTargetToDataURL(target, renderer, true);
+	_facelineTextureHook =async  (target, renderer) => {
+		const dataURL = await renderTargetToDataURL(target, renderer, true);
 		fn(dataURL);
 		_facelineTextureHook = () => null;
 	};
 }
 export function setMaskTextureHook(fn) {
-	_maskTextureHook = (target, renderer) => {
-		const dataURL = renderTargetToDataURL(target, renderer, true);
+	_maskTextureHook = async (target, renderer) => {
+		const dataURL = await renderTargetToDataURL(target, renderer, true);
 		fn(dataURL);
 		_maskTextureHook = () => null;
 	};
@@ -2469,7 +2482,7 @@ function _drawFacelineTexture(charModel, textureTempObject, renderer, module) {
 	// it must have a texture. For other DrawParams to not
 	// be empty they simply need to have a non-zero index count.
 	if (drawParams.length === 0) {
-		console.debug('_drawFacelineTexture: Skipping faceline texture.');
+		// console.debug('_drawFacelineTexture: Skipping faceline texture.');
 		return;
 	}
 
@@ -2491,7 +2504,7 @@ function _drawFacelineTexture(charModel, textureTempObject, renderer, module) {
 	const target = createAndRenderToTarget(offscreenScene,
 		getIdentCamera(), renderer, width, height, options);
 
-	console.debug(`Creating target ${target.texture.id} for faceline`);
+	// console.debug(`Creating target ${target.texture.id} for faceline`);
 
 	// Optionally view the texture for debugging.
 	_facelineTextureHook(target, renderer);
@@ -2534,7 +2547,7 @@ function _drawMaskTextures(charModel, textureTempObject, renderer, module) {
 		module._FFLiInvalidateRawMask(rawMaskDrawParamPtr);
 
 		const { target, scene } = _drawMaskTexture(charModel, rawMaskDrawParam, renderer, module);
-		console.debug(`Creating target ${target.texture.id} for mask ${i}`);
+		// console.debug(`Creating target ${target.texture.id} for mask ${i}`);
 		charModel._maskTargets[i] = target;
 
 		scenes.push(scene);
@@ -2724,7 +2737,7 @@ function disposeMeshes(group, scene) {
 		if (child.material) {
 			// Dispose texture in material.
 			if (child.material.map) {
-				console.debug('Disposing texture ', child.material.map.id);
+				// console.debug('Disposing texture ', child.material.map.id);
 				// If this was created by TextureManager
 				// then it overrides dispose() to also
 				// remove itself from the TextureManager map.
@@ -2760,50 +2773,6 @@ function disposeMeshes(group, scene) {
  * @returns {string} The data URL representing the RenderTarget's texture contents.
  */
 function renderTargetToDataURL(renderTarget, renderer, flipY = false) {
-	// Create a new scene using a full-screen quad.
-	const scene = new THREE.Scene();
-	scene.background = null;
-	// Assign a transparent, textured, and double-sided material.
-	const material = new THREE.MeshBasicMaterial({
-		side: THREE.DoubleSide,
-		map: renderTarget.texture,
-		transparent: true
-	});
-	const plane = new THREE.PlaneGeometry(2, 2); // Full-screen quad
-	const mesh = new THREE.Mesh(plane, material);
-	scene.add(mesh);
-
-	// Use an orthographic camera that fits the full screen.
-	const camera = getIdentCamera(flipY);
-	// Get previous render target, color space, and size.
-	const prevTarget = renderer.getRenderTarget();
-	const prevColorSpace = renderer.outputColorSpace;
-	const size = new THREE.Vector2();
-	renderer.getSize(size);
-
-	// Render to the main canvas to extract pixels.
-	renderer.setRenderTarget(null); // Switch render target.
-	// Use working color space.
-	renderer.outputColorSpace = THREE.ColorManagement ? THREE.ColorManagement.workingColorSpace : null;
-	renderer.setSize(renderTarget.width, renderTarget.height, false);
-	renderer.render(scene, camera);
-
-	// Convert the renderer's canvas to an image.
-	const dataURL = renderer.domElement.toDataURL('image/png');
-
-	// Cleanup.
-	material.dispose();
-	plane.dispose();
-	scene.remove(mesh);
-
-	// Restore previous size, color space, and target.
-	renderer.outputColorSpace = prevColorSpace;
-	renderer.setSize(size.x, size.y, false);
-	renderer.setRenderTarget(prevTarget);
-	return dataURL;
-}
-/* async ver (UNFINISHED BAD)
-function renderTargetToDataURL(renderTarget, renderer, flipY = false) {
 	return new Promise((resolve) => {
 
 	
@@ -2835,29 +2804,34 @@ function renderTargetToDataURL(renderTarget, renderer, flipY = false) {
 	renderer.setSize(renderTarget.width, renderTarget.height, false);
 	renderer.render(scene, camera);
 
+	function cleanup() {
+		// Cleanup.
+		material.dispose();
+		plane.dispose();
+		scene.remove(mesh);
+
+		// Restore previous size, color space, and target.
+		renderer.outputColorSpace = prevColorSpace;
+		renderer.setSize(size.x, size.y, false);
+		renderer.setRenderTarget(prevTarget);
+	}
+
 	// Convert the renderer's canvas to an image.
-	// const dataURL = renderer.domElement.toDataURL('image/png');
-	const dataURL = renderer.domElement.toBlob((blob) => {
-		var url = URL.createObjectURL(blob);
-		setTimeout(() => {
-			URL.revokeObjectURL(url);
-		}, 500);
-		return resolve(url);
-	}, "image/png");
-
-	// Cleanup.
-	material.dispose();
-	plane.dispose();
-	scene.remove(mesh);
-
-	// Restore previous size, color space, and target.
-	renderer.outputColorSpace = prevColorSpace;
-	renderer.setSize(size.x, size.y, false);
-	renderer.setRenderTarget(prevTarget);
-	// return dataURL;
+	if (typeof window === 'undefined') {
+		// assume this is a Web Worker, so it's offscreen canvas. an alt method is used
+		// using file reader was kind of dumb so i just create a blob URL in the main worker.ts file
+		renderer.domElement.convertToBlob({ type: "image/png" }).then(blob => {
+			resolve({type:"blob", result:blob});
+			cleanup();
+		});
+	} else {
+		const result = renderer.domElement.toDataURL('image/png');
+		// resolve(result);
+		resolve({type:"dataURL", result});
+		cleanup();
+	}
 });
 }
-*/
 
 // ---------------- appendImageFromDataURL(dataURL, container) ----------------
 /**
@@ -2951,7 +2925,7 @@ function getCameraForViewType(viewType, width = 1, height = 1) {
  * @param {ViewType} [viewType=ViewType.IconFovy45] viewType
  * @param {number} [width=256] - Desired icon width.
  * @param {number} [height=256] - Desired icon height.
- * @returns {string} A data URL of the icon image.
+ * @returns {Promise<any>} A data URL of the icon image.
  */
 export function createCharModelIcon(charModel, renderer, viewType = ViewType.MakeIcon, width = 256, height = 256, useBody=false) {
 	return new Promise((resolve) => {
@@ -3096,7 +3070,7 @@ export function createCharModelIcon(charModel, renderer, viewType = ViewType.Mak
  *
  * @type {StructInstance<StudioCharInfo>}
  */
-const StudioCharInfo = _.struct([
+export const StudioCharInfo = _.struct([
 	// Fields are named according to nn::mii::CharInfo.
 	_.uint8('beardColor'),
 	_.uint8('beardType'),
@@ -3153,7 +3127,7 @@ const StudioCharInfo = _.struct([
  * @param {StudioCharInfo} src - The StudioCharInfo instance.
  * @returns {FFLiCharInfo} The FFLiCharInfo output.
  */
-function convertStudioCharInfoToFFLiCharInfo(src) {
+export function convertStudioCharInfoToFFLiCharInfo(src) {
 	return {
 		miiVersion: 0,
 		faceline: {

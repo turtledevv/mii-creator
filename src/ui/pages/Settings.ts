@@ -129,7 +129,7 @@ export const settingsInfo: Record<string, any> = {
     label: "Static camera in editor",
     default: false,
     description:
-      "The camera will be further away in the editor and cannot be moved.",
+      "The camera will be further away in the editor and cannot be moved.\nThis option is for if you want it to look like Mii Studio.",
   },
   autoCloseCustomRender: {
     type: "checkbox",
@@ -178,7 +178,7 @@ export const settingsInfo: Record<string, any> = {
     label: "Shader Type",
     description:
       "Sorry that most of the shaders are not yet ready for use.\nUsing the Simple shader brings back the old simplistic Mii Creator lighting from the early days.\n* Does not apply to 2D mode.",
-    default: ShaderType.WiiU,
+    default: ShaderType.Miitomo,
     choices: [
       { label: "No Lighting", value: ShaderType.LightDisabled },
       { label: "Simple", value: ShaderType.Simple },
@@ -187,7 +187,7 @@ export const settingsInfo: Record<string, any> = {
       { label: "Wii U (Blinn)", value: ShaderType.WiiUBlinn },
       { label: "Wii U (Alt)", value: ShaderType.WiiUFFLIconWithBody },
       { label: "Switch (WIP)", value: ShaderType.Switch, disabled: true },
-      { label: "Miitomo (WIP)", value: ShaderType.Miitomo, disabled: true },
+      { label: "Miitomo", value: ShaderType.Miitomo },
     ],
   },
   simpleShaderLegacyColors: {

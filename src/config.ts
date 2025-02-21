@@ -2,7 +2,7 @@
 
 // Settings relating to local rendering.
 const useRendererServer = false; // Allow use of the renderer server (legacy rendering)
-const fflResourcePath = "FFLResHigh.dat"; // Configure the path for where the resource file is located.
+const fflResourcePath = "/FFLResHigh.dat"; // Configure the path for where the resource file is located.
 
 // Instance of FFL-Testing/Mii Studio API compatible renderer.
 // const baseURL = "http://localhost:5000/miis/image"; // <-- Uncomment this when using local FFL-testing for development
