@@ -1,6 +1,6 @@
 # Mii Creator App (In-dev FFL.js Branch)
 
-![Preview image](public/assets/images/preview_dark.png)
+![Preview image](public/assets/images/preview.png)
 
 Create and share Mii characters online with just a few clicks!
 

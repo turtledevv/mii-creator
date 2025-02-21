@@ -251,7 +251,9 @@ export class Mii3DScene {
 
     this.#camera.aspect = this.#parent.offsetWidth / this.#parent.offsetHeight;
     this.#camera.updateProjectionMatrix();
-    this.resizeRendererToDisplaySize();
+    setTimeout(() => {
+      this.resizeRendererToDisplaySize();
+    }, 500);
   }
   async #loadHatModels(path: string = "./assets/models/hat_models_bundle.zip") {
     this.hatModels = [];
@@ -378,7 +380,7 @@ export class Mii3DScene {
       // weird hacky fix to correct the camera position at startup
       setTimeout(() => {
         this.focusCamera(CameraPosition.MiiHead, true, false);
-      }, 750);
+      }, 500);
     }
   }
   getRendererElement() {

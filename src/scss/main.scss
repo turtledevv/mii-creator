@@ -443,6 +443,12 @@ button {
   pointer-events: none;
 }
 
+.gender-select-btn {
+  flex-direction: column;
+  gap: 0;
+  font-size: 20px;
+}
+
 video {
   background-color: var(--root);
   border: 2px solid var(--stroke);
